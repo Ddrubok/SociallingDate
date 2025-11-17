@@ -1,0 +1,59 @@
+# =======================================================
+# Flutter 프로젝트용 .gitignore
+# 빌드 결과물, IDE 설정, OS별 임시 파일을 무시합니다.
+# =======================================================
+
+# --- Flutter ---
+# 빌드된 결과물 (가장 중요)
+/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.dart_tool/
+
+# --- IDE (VS Code, Android Studio) ---
+# VS Code
+/.vscode/
+/.idea/
+
+# Android Studio / IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+atlassian-ide-plugin.xml
+/captures/
+/build/
+/app/build/
+
+# --- OS (Windows, macOS, Linux) ---
+# Windows
+Thumbs.db
+desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Trashes
+.Spotlight-V100
+
+# Linux
+*~
+.nfs*
+
+# --- 민감한 파일 (보안) ---
+# Firebase 설정 파일 (iOS). 이 파일은 Git에 포함해야 하는 경우도 있으나,
+# 협업 시 각자의 Firebase 환경을 쓸 경우 무시하는 것이 좋습니다.
+# /ios/Runner/GoogleService-Info.plist
+# /android/app/google-services.json
+
+# 만약 .env 파일 등으로 API 키를 관리한다면
+*.env
+.env
+
+# --- 기타 ---
+# Flutter 로그 및 크래시 리포트
+flutter_*.log
+crash_*.log
+.buildlog/

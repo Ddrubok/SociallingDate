@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../models/chat_room_model.dart';
+import '../../services/user_service.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ChatRoomScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class ChatRoomScreen extends StatefulWidget {
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final ChatService _chatService = ChatService();
+  final UserService _userService = UserService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -66,14 +68,66 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
+  Future<void> _showMannerRatingDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('매너 평가'),
+        content: Text(
+          '${widget.otherUserName}님과의 대화는 어떠셨나요?\n솔직한 평가는 안전한 커뮤니티를 만듭니다.',
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              _rateUser(0.5); // 좋아요: +0.5점
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.thumb_up, color: Colors.blue),
+            label: const Text('좋아요'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              _rateUser(-0.5); // 아쉬워요: -0.5점
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.thumb_down, color: Colors.red),
+            label: const Text('아쉬워요'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- [신규] 점수 반영 로직 ---
+  Future<void> _rateUser(double scoreChange) async {
+    try {
+      await _userService.updateMannerScore(widget.otherUserId, scoreChange);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              scoreChange > 0 ? '따뜻한 평가를 남겼습니다! 온도가 올라갑니다.' : '평가가 반영되었습니다.',
+            ),
+            backgroundColor: scoreChange > 0 ? Colors.blue : Colors.grey,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('평가 반영 중 오류가 발생했습니다.')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUserId = context.read<AuthProvider>().currentUserId;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.otherUserName),
-      ),
+      appBar: AppBar(title: Text(widget.otherUserName)),
       body: Column(
         children: [
           Expanded(
@@ -111,8 +165,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
-                        mainAxisAlignment:
-                            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        mainAxisAlignment: isMe
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
                         children: [
                           if (!isMe)
                             CircleAvatar(
@@ -138,17 +193,24 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                   Text(
                                     message.text,
                                     style: TextStyle(
-                                      color: isMe ? Colors.white : Colors.black87,
+                                      color: isMe
+                                          ? Colors.white
+                                          : Colors.black87,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     message.timestamp != null
-                                        ? timeago.format(message.timestamp!, locale: 'ko')
+                                        ? timeago.format(
+                                            message.timestamp!,
+                                            locale: 'ko',
+                                          )
                                         : '',
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: isMe ? Colors.white70 : Colors.grey[600],
+                                      color: isMe
+                                          ? Colors.white70
+                                          : Colors.grey[600],
                                     ),
                                   ),
                                 ],
@@ -160,8 +222,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             CircleAvatar(
                               radius: 16,
                               child: Text(
-                                  context.read<AuthProvider>().currentUserProfile?.displayName[0] ??
-                                      'U'),
+                                context
+                                        .read<AuthProvider>()
+                                        .currentUserProfile
+                                        ?.displayName[0] ??
+                                    'U',
+                              ),
                             ),
                         ],
                       ),

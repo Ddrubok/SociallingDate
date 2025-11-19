@@ -36,10 +36,7 @@ class ChatService {
         'lastMessageSenderId': '',
         'lastMessageAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
-        'unreadCount': {
-          currentUserId: 0,
-          otherUserId: 0,
-        },
+        'unreadCount': {currentUserId: 0, otherUserId: 0},
       });
 
       return newRoom.id;
@@ -61,22 +58,33 @@ class ChatService {
           .doc(roomId)
           .collection('messages')
           .add({
-        'senderId': senderId,
-        'text': text,
-        'timestamp': FieldValue.serverTimestamp(),
-        'isModerated': false,
-        'status': 'safe',
-        'isRead': false,
-      });
+            'senderId': senderId,
+            'text': text,
+            'timestamp': FieldValue.serverTimestamp(),
+            'isModerated': false,
+            'status': 'safe',
+            'isRead': false,
+          });
 
       // 채팅방 정보 업데이트
-      final roomDoc = await _firestore.collection('chat_rooms').doc(roomId).get();
+      final roomDoc = await _firestore
+          .collection('chat_rooms')
+          .doc(roomId)
+          .get();
       if (roomDoc.exists) {
-        final participants = List<String>.from(roomDoc.data()?['participants'] ?? []);
-        final otherUserId = participants.firstWhere((id) => id != senderId, orElse: () => '');
-        
-        final currentUnreadCount = Map<String, int>.from(roomDoc.data()?['unreadCount'] ?? {});
-        currentUnreadCount[otherUserId] = (currentUnreadCount[otherUserId] ?? 0) + 1;
+        final participants = List<String>.from(
+          roomDoc.data()?['participants'] ?? [],
+        );
+        final otherUserId = participants.firstWhere(
+          (id) => id != senderId,
+          orElse: () => '',
+        );
+
+        final currentUnreadCount = Map<String, int>.from(
+          roomDoc.data()?['unreadCount'] ?? {},
+        );
+        currentUnreadCount[otherUserId] =
+            (currentUnreadCount[otherUserId] ?? 0) + 1;
 
         await _firestore.collection('chat_rooms').doc(roomId).update({
           'lastMessage': text,
@@ -99,10 +107,10 @@ class ChatService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => MessageModel.fromFirestore(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => MessageModel.fromFirestore(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   // 사용자의 채팅방 목록 스트림
@@ -110,13 +118,25 @@ class ChatService {
     return _firestore
         .collection('chat_rooms')
         .where('participants', arrayContains: userId)
-        .orderBy('lastMessageAt', descending: true)
+        // .orderBy('lastMessageAt', descending: true) // [삭제] 이 줄 때문에 인덱스가 필요했습니다.
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => ChatRoomModel.fromFirestore(doc.data(), doc.id))
-          .toList();
-    });
+          final rooms = snapshot.docs
+              .map((doc) => ChatRoomModel.fromFirestore(doc.data(), doc.id))
+              .toList();
+
+          // [추가] 앱 내부에서 최신순으로 정렬합니다.
+          rooms.sort((a, b) {
+            // null 체크: 시간이 없으면 아주 예전 시간으로 취급
+            final aTime =
+                a.lastMessageAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bTime =
+                b.lastMessageAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bTime.compareTo(aTime); // 내림차순 정렬 (최신순)
+          });
+
+          return rooms;
+        });
   }
 
   // 읽음 처리

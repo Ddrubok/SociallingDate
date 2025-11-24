@@ -14,6 +14,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -37,6 +38,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    dependencies {
+    // [추가] Desugaring 라이브러리 추가
+   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
 }
 
 flutter {

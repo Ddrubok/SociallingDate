@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../home/discover_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../profile/my_profile_screen.dart';
+import '../../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +19,12 @@ class _HomeScreenState extends State<HomeScreen> {
     ChatListScreen(),
     MyProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    NotificationService().initialize();
+  }
 
   @override
   Widget build(BuildContext context) {

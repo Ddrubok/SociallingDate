@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../screens/chat/chat_list_screen.dart';
+import 'package:flutter/material.dart';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -47,6 +49,33 @@ class NotificationService {
       debugPrint('FCM 토큰 저장 완료: $token');
     } catch (e) {
       debugPrint('토큰 저장 실패: $e');
+    }
+  }
+
+  Future<void> setupInteractedMessage(BuildContext context) async {
+    // 1. 앱이 완전히 꺼진 상태에서 알림을 클릭해 열었을 때
+    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
+    if (initialMessage != null) {
+      _handleMessage(context, initialMessage);
+    }
+
+    // 2. 앱이 백그라운드(홈화면)에 있을 때 알림을 클릭했을 때
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleMessage(context, message);
+    });
+  }
+
+  void _handleMessage(BuildContext context, RemoteMessage message) {
+    // 알림 데이터에 roomId가 있다면 채팅 목록으로 이동
+    if (message.data['roomId'] != null) {
+      debugPrint('알림 클릭: 채팅방 ID ${message.data['roomId']}');
+
+      // 바로 채팅방으로 가면 유저 정보가 없어서 에러가 날 수 있으므로,
+      // 안전하게 '채팅 목록' 화면으로 이동시킵니다.
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ChatListScreen()),
+      );
     }
   }
 }

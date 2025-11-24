@@ -23,7 +23,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    NotificationService().initialize();
+    final notificationService = NotificationService();
+    notificationService.initialize();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notificationService.setupInteractedMessage(context);
+    });
   }
 
   @override

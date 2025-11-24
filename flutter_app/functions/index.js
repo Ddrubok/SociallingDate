@@ -1,3 +1,4 @@
+// [수정] v1 문법 사용 명시
 const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 admin.initializeApp();
@@ -12,7 +13,7 @@ exports.sendChatNotification = functions.firestore
         const text = messageData.text;
 
         try {
-            // 1. 채팅방 정보 가져오기 (참여자 목록 확인)
+            // 1. 채팅방 정보 가져오기
             const roomDoc = await admin.firestore().collection("chat_rooms").doc(roomId).get();
 
             if (!roomDoc.exists) {
@@ -20,14 +21,14 @@ exports.sendChatNotification = functions.firestore
                 return null;
             }
 
-            const participants = roomDoc.data().participants; // [userId1, userId2]
+            const participants = roomDoc.data().participants;
             const names = roomDoc.data().participantNames;
 
-            // 2. 수신자(나 말고 다른 사람) 찾기
+            // 2. 수신자 찾기
             const receiverId = participants.find((uid) => uid !== senderId);
             if (!receiverId) return null;
 
-            // 3. 수신자의 FCM 토큰(핸드폰 주소) 가져오기
+            // 3. 수신자의 FCM 토큰 가져오기
             const userDoc = await admin.firestore().collection("users").doc(receiverId).get();
 
             if (!userDoc.exists) return null;
@@ -39,23 +40,39 @@ exports.sendChatNotification = functions.firestore
                 return null;
             }
 
-            // 4. 알림 메시지 내용 구성
+            // 4. [수정] 알림 메시지 구성 (최신 send 메서드 양식)
             const senderName = (names && names[senderId]) ? names[senderId] : "알 수 없음";
 
-            const payload = {
+            const message = {
+                token: fcmToken, // 토큰을 메시지 객체 안에 넣습니다.
                 notification: {
                     title: senderName,
                     body: text,
                 },
                 data: {
                     click_action: "FLUTTER_NOTIFICATION_CLICK",
-                    roomId: roomId, // 알림 클릭 시 이동할 방 ID
+                    roomId: roomId,
+                },
+                // 안드로이드 추가 설정 (중요)
+                android: {
+                    priority: 'high',
+                    notification: {
+                        clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+                    }
+                },
+                // iOS 추가 설정 (선택 사항)
+                apns: {
+                    payload: {
+                        aps: {
+                            sound: 'default',
+                        },
+                    },
                 },
             };
 
-            // 5. 진짜로 알림 발송!
+            // 5. [수정] 알림 발송 (sendToDevice -> send)
             console.log(`Sending notification to: ${receiverId}`);
-            return admin.messaging().sendToDevice(fcmToken, payload);
+            return admin.messaging().send(message);
 
         } catch (error) {
             console.error("Error sending notification:", error);

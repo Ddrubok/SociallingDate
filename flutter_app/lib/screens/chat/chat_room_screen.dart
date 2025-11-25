@@ -7,6 +7,7 @@ import '../../models/chat_room_model.dart';
 import '../../models/user_model.dart'; // [추가] UserModel 사용을 위해 필요
 import '../profile/user_profile_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../services/location_service.dart'; // [추가]
 
 class ChatRoomScreen extends StatefulWidget {
   final String roomId;
@@ -29,6 +30,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final UserService _userService = UserService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final LocationService _locationService = LocationService(); // [추가]
+  bool _isSharing = false; // 내 공유 상태
 
   // [추가] 상대방의 전체 정보를 저장할 변수 (사진 포함)
   UserModel? _otherUser;
@@ -46,6 +49,41 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleLocationSharing() async {
+    final userId = context.read<AuthProvider>().currentUserId;
+    if (userId == null) return;
+
+    if (_isSharing) {
+      // 공유 끄기
+      await _userService.stopSharingLocation(userId);
+      setState(() => _isSharing = false);
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('위치 공유를 껐습니다.')));
+    } else {
+      // 공유 켜기
+      final pos = await _locationService.getCurrentLocation();
+      if (pos != null) {
+        await _userService.updateUserLocation(
+          userId,
+          pos.latitude,
+          pos.longitude,
+        );
+        setState(() => _isSharing = true);
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('위치 공유를 시작했습니다. 상단에 거리가 표시됩니다.')),
+          );
+      } else {
+        if (mounted)
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('위치 권한이 필요합니다.')));
+      }
+    }
   }
 
   // [추가] 상대방 프로필 정보(사진 등) 불러오기
@@ -197,6 +235,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(_isSharing ? Icons.location_on : Icons.location_off),
+            color: _isSharing ? Colors.green : Colors.grey,
+            onPressed: _toggleLocationSharing,
+            tooltip: '위치 공유',
+          ),
+
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'rate') {

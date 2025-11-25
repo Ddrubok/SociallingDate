@@ -15,6 +15,9 @@ class UserModel {
   final bool isBlocked;
   final List<String> blockedUsers;
   final int reportCount;
+  final double? latitude; // [추가]
+  final double? longitude; // [추가]
+  final bool isSharingLocation; // [추가]
 
   UserModel({
     required this.uid,
@@ -31,6 +34,9 @@ class UserModel {
     this.isBlocked = false,
     this.blockedUsers = const [],
     this.reportCount = 0,
+    this.latitude,
+    this.longitude,
+    this.isSharingLocation = false,
   });
 
   factory UserModel.fromFirestore(Map<String, dynamic> data, String uid) {
@@ -64,7 +70,9 @@ class UserModel {
       'age': age,
       'gender': gender,
       'location': location,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
       'isBlocked': isBlocked,
       'blockedUsers': blockedUsers,
       'reportCount': reportCount,

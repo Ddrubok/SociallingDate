@@ -18,20 +18,30 @@ class UserService {
 
       // 매너 점수 필터
       if (minMannerScore != null) {
-        query = query.where('mannerScore', isGreaterThanOrEqualTo: minMannerScore);
+        query = query.where(
+          'mannerScore',
+          isGreaterThanOrEqualTo: minMannerScore,
+        );
       }
 
       final snapshot = await query.get();
-      
+
       List<UserModel> users = snapshot.docs
-          .map((doc) => UserModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .map(
+            (doc) => UserModel.fromFirestore(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
           .where((user) => user.uid != currentUserId)
           .toList();
 
       // 관심사 필터링 (메모리에서 처리)
       if (interestFilter != null && interestFilter.isNotEmpty) {
         users = users.where((user) {
-          return user.interests.any((interest) => interestFilter.contains(interest));
+          return user.interests.any(
+            (interest) => interestFilter.contains(interest),
+          );
         }).toList();
       }
 
@@ -99,9 +109,10 @@ class UserService {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (userDoc.exists) {
-        final currentScore = (userDoc.data()?['mannerScore'] as num?)?.toDouble() ?? 50.0;
+        final currentScore =
+            (userDoc.data()?['mannerScore'] as num?)?.toDouble() ?? 50.0;
         final newScore = (currentScore + scoreChange).clamp(0.0, 100.0);
-        
+
         await _firestore.collection('users').doc(userId).update({
           'mannerScore': newScore,
         });
@@ -109,5 +120,25 @@ class UserService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> updateUserLocation(String userId, double lat, double lng) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'latitude': lat,
+        'longitude': lng,
+        'lastLocationUpdate': FieldValue.serverTimestamp(),
+        'isSharingLocation': true, // 위치 공유 중 상태 표시
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // [추가] 위치 공유 끄기
+  Future<void> stopSharingLocation(String userId) async {
+    await _firestore.collection('users').doc(userId).update({
+      'isSharingLocation': false,
+    });
   }
 }

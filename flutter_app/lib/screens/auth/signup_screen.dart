@@ -4,7 +4,6 @@ import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import 'dart:io'; // dart:io 임포트
 import '../../services/storage_service.dart'; // 방금 만든 서비스 임포트
-import 'package:image_picker/image_picker.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

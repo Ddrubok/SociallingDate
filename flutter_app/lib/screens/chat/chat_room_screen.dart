@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
-import '../../models/chat_room_model.dart';
 import '../../services/user_service.dart';
+import '../../models/chat_room_model.dart';
+import '../../models/user_model.dart'; // [추가] UserModel 사용을 위해 필요
+import '../profile/user_profile_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 class ChatRoomScreen extends StatefulWidget {
@@ -28,11 +30,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  // [추가] 상대방의 전체 정보를 저장할 변수 (사진 포함)
+  UserModel? _otherUser;
+
   @override
   void initState() {
     super.initState();
     timeago.setLocaleMessages('ko', timeago.KoMessages());
     _markAsRead();
+    _loadOtherUserProfile(); // [추가] 입장 시 상대방 정보 로드
   }
 
   @override
@@ -40,6 +46,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // [추가] 상대방 프로필 정보(사진 등) 불러오기
+  Future<void> _loadOtherUserProfile() async {
+    try {
+      final user = await _userService.getUser(widget.otherUserId);
+      if (mounted && user != null) {
+        setState(() {
+          _otherUser = user;
+        });
+      }
+    } catch (e) {
+      // 로드 실패 시 조용히 넘어감 (기본 아이콘 표시)
+    }
   }
 
   Future<void> _markAsRead() async {
@@ -56,15 +76,45 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final currentUserId = context.read<AuthProvider>().currentUserId;
     if (currentUserId == null) return;
 
+    _messageController.clear();
+
     try {
       await _chatService.sendMessage(
         roomId: widget.roomId,
         senderId: currentUserId,
         text: text,
       );
-      _messageController.clear();
     } catch (e) {
-      // Error handling
+      if (mounted) {
+        _messageController.text = text;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('메시지 전송 실패')));
+      }
+    }
+  }
+
+  // [수정] 이미 불러온 _otherUser 정보를 활용하여 즉시 이동
+  void _navigateToUserProfile() {
+    if (_otherUser != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserProfileScreen(user: _otherUser!),
+        ),
+      );
+    } else {
+      // 만약 아직 로드되지 않았다면 다시 시도 (기존 로직)
+      _userService.getUser(widget.otherUserId).then((user) {
+        if (user != null && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfileScreen(user: user),
+            ),
+          );
+        }
+      });
     }
   }
 
@@ -79,7 +129,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         actions: [
           TextButton.icon(
             onPressed: () {
-              _rateUser(0.5); // 좋아요: +0.5점
+              _rateUser(0.5);
               Navigator.pop(context);
             },
             icon: const Icon(Icons.thumb_up, color: Colors.blue),
@@ -87,7 +137,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           ),
           TextButton.icon(
             onPressed: () {
-              _rateUser(-0.5); // 아쉬워요: -0.5점
+              _rateUser(-0.5);
               Navigator.pop(context);
             },
             icon: const Icon(Icons.thumb_down, color: Colors.red),
@@ -98,11 +148,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  // --- [신규] 점수 반영 로직 ---
   Future<void> _rateUser(double scoreChange) async {
     try {
       await _userService.updateMannerScore(widget.otherUserId, scoreChange);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -114,11 +162,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('평가 반영 중 오류가 발생했습니다.')));
-      }
+      // 에러 처리
     }
   }
 
@@ -127,7 +171,53 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final currentUserId = context.read<AuthProvider>().currentUserId;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.otherUserName)),
+      appBar: AppBar(
+        title: InkWell(
+          onTap: _navigateToUserProfile,
+          child: Row(
+            children: [
+              // [수정] 상단 프로필 사진 표시
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.grey[200],
+                backgroundImage:
+                    _otherUser?.profileImageUrl != null &&
+                        _otherUser!.profileImageUrl.isNotEmpty
+                    ? NetworkImage(_otherUser!.profileImageUrl)
+                    : null,
+                child:
+                    _otherUser?.profileImageUrl == null ||
+                        _otherUser!.profileImageUrl.isEmpty
+                    ? const Icon(Icons.person, size: 20, color: Colors.grey)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(widget.otherUserName, style: const TextStyle(fontSize: 16)),
+            ],
+          ),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'rate') {
+                _showMannerRatingDialog();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'rate',
+                child: Row(
+                  children: [
+                    Icon(Icons.how_to_vote, color: Colors.amber),
+                    SizedBox(width: 8),
+                    Text('매너 평가하기'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -137,7 +227,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 if (snapshot.hasError) {
                   return Center(child: Text('오류: ${snapshot.error}'));
                 }
@@ -168,11 +257,31 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         mainAxisAlignment: isMe
                             ? MainAxisAlignment.end
                             : MainAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start, // [수정] 프로필 사진 높이 정렬
                         children: [
+                          // [수정] 상대방 메시지 옆 프로필 사진 (클릭 가능)
                           if (!isMe)
-                            CircleAvatar(
-                              radius: 16,
-                              child: Text(widget.otherUserName[0]),
+                            GestureDetector(
+                              onTap: _navigateToUserProfile,
+                              child: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage:
+                                    _otherUser?.profileImageUrl != null &&
+                                        _otherUser!.profileImageUrl.isNotEmpty
+                                    ? NetworkImage(_otherUser!.profileImageUrl)
+                                    : null,
+                                child:
+                                    _otherUser?.profileImageUrl == null ||
+                                        _otherUser!.profileImageUrl.isEmpty
+                                    ? Text(
+                                        widget.otherUserName.isNotEmpty
+                                            ? widget.otherUserName[0]
+                                            : '?',
+                                      )
+                                    : null,
+                              ),
                             ),
                           if (!isMe) const SizedBox(width: 8),
                           Flexible(
@@ -217,18 +326,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               ),
                             ),
                           ),
+                          // (내 프로필 사진 표시는 선택사항이라 제외하거나 유지)
                           if (isMe) const SizedBox(width: 8),
-                          if (isMe)
-                            CircleAvatar(
-                              radius: 16,
-                              child: Text(
-                                context
-                                        .read<AuthProvider>()
-                                        .currentUserProfile
-                                        ?.displayName[0] ??
-                                    'U',
-                              ),
-                            ),
                         ],
                       ),
                     );
@@ -243,7 +342,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),

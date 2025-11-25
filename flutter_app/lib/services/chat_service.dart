@@ -52,25 +52,30 @@ class ChatService {
     required String text,
   }) async {
     try {
-      // 메시지 추가
-      await _firestore
+      // 1. 배치(Batch) 생성: 여러 작업을 한 번에 묶음
+      final batch = _firestore.batch();
+
+      // 2. 메시지 추가 작업 준비
+      final messageRef = _firestore
           .collection('chat_rooms')
           .doc(roomId)
           .collection('messages')
-          .add({
-            'senderId': senderId,
-            'text': text,
-            'timestamp': FieldValue.serverTimestamp(),
-            'isModerated': false,
-            'status': 'safe',
-            'isRead': false,
-          });
+          .doc(); // ID 자동 생성
 
-      // 채팅방 정보 업데이트
-      final roomDoc = await _firestore
-          .collection('chat_rooms')
-          .doc(roomId)
-          .get();
+      final messageData = {
+        'senderId': senderId,
+        'text': text,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isModerated': false,
+        'status': 'safe',
+        'isRead': false,
+      };
+
+      batch.set(messageRef, messageData);
+
+      final roomRef = _firestore.collection('chat_rooms').doc(roomId);
+      final roomDoc = await roomRef.get();
+
       if (roomDoc.exists) {
         final participants = List<String>.from(
           roomDoc.data()?['participants'] ?? [],
@@ -80,19 +85,18 @@ class ChatService {
           orElse: () => '',
         );
 
-        final currentUnreadCount = Map<String, int>.from(
-          roomDoc.data()?['unreadCount'] ?? {},
-        );
-        currentUnreadCount[otherUserId] =
-            (currentUnreadCount[otherUserId] ?? 0) + 1;
-
-        await _firestore.collection('chat_rooms').doc(roomId).update({
-          'lastMessage': text,
-          'lastMessageSenderId': senderId,
-          'lastMessageAt': FieldValue.serverTimestamp(),
-          'unreadCount': currentUnreadCount,
-        });
+        if (otherUserId.isNotEmpty) {
+          batch.update(roomRef, {
+            'lastMessage': text,
+            'lastMessageSenderId': senderId,
+            'lastMessageAt': FieldValue.serverTimestamp(),
+            'unreadCount.$otherUserId': FieldValue.increment(1),
+          });
+        }
       }
+
+      // 4. 한 번에 전송 (네트워크 비용 1회)
+      await batch.commit();
     } catch (e) {
       rethrow;
     }

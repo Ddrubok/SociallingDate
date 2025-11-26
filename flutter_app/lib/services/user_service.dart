@@ -4,7 +4,7 @@ import '../models/user_model.dart';
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 모든 사용자 가져오기 (관심사 기반 필터링)
+  // 1. 모든 사용자 가져오기
   Future<List<UserModel>> getAllUsers({
     String? currentUserId,
     List<String>? interestFilter,
@@ -12,11 +12,8 @@ class UserService {
   }) async {
     try {
       Query query = _firestore.collection('users');
-
-      // 차단되지 않은 사용자만
       query = query.where('isBlocked', isEqualTo: false);
 
-      // 매너 점수 필터
       if (minMannerScore != null) {
         query = query.where(
           'mannerScore',
@@ -36,7 +33,6 @@ class UserService {
           .where((user) => user.uid != currentUserId)
           .toList();
 
-      // 관심사 필터링 (메모리에서 처리)
       if (interestFilter != null && interestFilter.isNotEmpty) {
         users = users.where((user) {
           return user.interests.any(
@@ -45,16 +41,14 @@ class UserService {
         }).toList();
       }
 
-      // 매너 점수 순으로 정렬
       users.sort((a, b) => b.mannerScore.compareTo(a.mannerScore));
-
       return users;
     } catch (e) {
       rethrow;
     }
   }
 
-  // 특정 사용자 가져오기
+  // 2. 특정 사용자 가져오기
   Future<UserModel?> getUser(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -67,7 +61,7 @@ class UserService {
     }
   }
 
-  // 사용자 차단
+  // 3. 사용자 차단
   Future<void> blockUser(String currentUserId, String targetUserId) async {
     try {
       await _firestore.collection('users').doc(currentUserId).update({
@@ -78,7 +72,18 @@ class UserService {
     }
   }
 
-  // 사용자 신고
+  // 4. 사용자 차단 해제
+  Future<void> unblockUser(String currentUserId, String targetUserId) async {
+    try {
+      await _firestore.collection('users').doc(currentUserId).update({
+        'blockedUsers': FieldValue.arrayRemove([targetUserId]),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // 5. 사용자 신고
   Future<void> reportUser({
     required String reporterId,
     required String reportedUserId,
@@ -95,7 +100,6 @@ class UserService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 신고 카운트 증가
       await _firestore.collection('users').doc(reportedUserId).update({
         'reportCount': FieldValue.increment(1),
       });
@@ -104,7 +108,7 @@ class UserService {
     }
   }
 
-  // 매너 점수 업데이트
+  // 6. 매너 점수 업데이트
   Future<void> updateMannerScore(String userId, double scoreChange) async {
     try {
       final userDoc = await _firestore.collection('users').doc(userId).get();
@@ -122,23 +126,28 @@ class UserService {
     }
   }
 
+  // 7. [복구] 위치 공유 켜기
   Future<void> updateUserLocation(String userId, double lat, double lng) async {
     try {
       await _firestore.collection('users').doc(userId).update({
         'latitude': lat,
         'longitude': lng,
         'lastLocationUpdate': FieldValue.serverTimestamp(),
-        'isSharingLocation': true, // 위치 공유 중 상태 표시
+        'isSharingLocation': true,
       });
     } catch (e) {
       rethrow;
     }
   }
 
-  // [추가] 위치 공유 끄기
+  // 8. [복구] 위치 공유 끄기
   Future<void> stopSharingLocation(String userId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'isSharingLocation': false,
-    });
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'isSharingLocation': false,
+      });
+    } catch (e) {
+      rethrow;
+    }
   }
 }

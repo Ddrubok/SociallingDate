@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:math'; // 랜덤 생성을 위해 추가
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 접근을 위해 추가
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// [중요] 번역 파일 임포트
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../models/user_model.dart';
 import '../../services/user_service.dart';
 import '../../providers/auth_provider.dart';
@@ -23,7 +25,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면이 그려진 후 데이터 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUsers();
     });
@@ -38,19 +39,22 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         interestFilter: _selectedInterests.isNotEmpty
             ? _selectedInterests
             : null,
-        minMannerScore: 50.0, // 매너온도 50도 이상만 표시
+        minMannerScore: 50.0,
       );
-      setState(() {
-        _users = users;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _users = users;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      print('유저 로드 오류: $e'); // 디버깅용 로그
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  // --- [개발용] 가짜 유저 생성 함수 ---
+  // [개발용] 가짜 유저 생성 함수
   Future<void> _createDummyUser() async {
     final random = Random();
     final names = ['김철수', '이영희', '박지민', '최수현', '정우성', '강동원'];
@@ -63,7 +67,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     ];
     final locations = ['서울 강남구', '부산 해운대구', '경기 판교', '서울 마포구'];
 
-    // 랜덤 데이터 생성
     final name =
         '${names[random.nextInt(names.length)]} ${random.nextInt(100)}';
     final tempId = 'dummy_${DateTime.now().millisecondsSinceEpoch}';
@@ -71,14 +74,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     final dummyUser = UserModel(
       uid: tempId,
       displayName: name,
-      // picsum을 사용하여 매번 다른 이미지 생성
       profileImageUrl: 'https://picsum.photos/seed/$tempId/200/200',
       authStatus: 'verified',
-      mannerScore: 50.0 + random.nextInt(40), // 50~90점 사이
+      mannerScore: 50.0 + random.nextInt(40),
       interests: {
         interestsList[random.nextInt(interestsList.length)],
         interestsList[random.nextInt(interestsList.length)],
-      }.toList(), // 중복 제거
+      }.toList(),
       bio: '안녕하세요! $name입니다. 함께 취미를 즐겨요.',
       age: 20 + random.nextInt(15),
       gender: random.nextBool() ? 'male' : 'female',
@@ -87,13 +89,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       isBlocked: false,
     );
 
-    // Firestore에 직접 저장
     await FirebaseFirestore.instance
         .collection('users')
         .doc(tempId)
         .set(dummyUser.toFirestore());
 
-    // 목록 새로고침
     if (mounted) {
       ScaffoldMessenger.of(
         context,
@@ -101,13 +101,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       _loadUsers();
     }
   }
-  // ---------------------------------
 
   void _showInterestFilter() {
-    // ... (기존 필터 로직 유지)
-    // (아래 전체 코드에 포함되어 있습니다)
     final currentUserInterests =
         context.read<AuthProvider>().currentUserProfile?.interests ?? [];
+    // [번역] 다이얼로그 내부에서도 l10n 사용 가능
+    final l10n = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -125,7 +124,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '관심사 필터',
+                          l10n.filterTitle, // "관심사 필터"
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -137,7 +136,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                             Navigator.pop(context);
                             _loadUsers();
                           },
-                          child: const Text('초기화'),
+                          child: Text(l10n.reset), // "초기화"
                         ),
                       ],
                     ),
@@ -170,7 +169,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                         Navigator.pop(context);
                         _loadUsers();
                       },
-                      child: const Text('적용'),
+                      child: Text(l10n.apply), // "적용"
                     ),
                   ],
                 ),
@@ -184,11 +183,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // [번역] 변수 선언
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('탐색'),
+        title: Text(l10n.discoverTitle), // "탐색"
         actions: [
-          // 필터 버튼
           IconButton(
             icon: Badge(
               isLabelVisible: _selectedInterests.isNotEmpty,
@@ -199,14 +200,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           ),
         ],
       ),
-      // --- [개발용] 플로팅 버튼 추가 ---
       floatingActionButton: FloatingActionButton(
         onPressed: _createDummyUser,
         backgroundColor: Colors.orange,
         tooltip: '테스트용 가짜 유저 생성',
         child: const Icon(Icons.person_add),
       ),
-      // ---------------------------
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _users.isEmpty
@@ -217,14 +216,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
-                    '매칭되는 사용자가 없습니다',
+                    l10n.noUsersFound, // "매칭되는 사용자가 없습니다"
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '오른쪽 아래 버튼을 눌러\n테스트 유저를 만들어보세요!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.orange),
                   ),
                 ],
               ),
@@ -243,7 +236,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 }
 
-// _UserCard 클래스는 기존과 동일하게 유지
 class _UserCard extends StatelessWidget {
   final UserModel user;
 
@@ -296,7 +288,7 @@ class _UserCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${user.age}세 · ${user.location}',
+                      '${user.age}세 · ${user.location}', // 나이, 지역 등은 데이터 값이라 유지
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const SizedBox(height: 8),

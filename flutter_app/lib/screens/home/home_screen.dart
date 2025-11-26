@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+// [중요] 번역 파일 임포트
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../home/discover_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../profile/my_profile_screen.dart';
-import '../../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,18 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    final notificationService = NotificationService();
-    notificationService.initialize();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notificationService.setupInteractedMessage(context);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // [번역] 변수 선언
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: NavigationBar(
@@ -42,21 +35,22 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex = index;
           });
         },
-        destinations: const [
+        // [주의] l10n 변수를 쓰기 때문에 여기서는 'const'를 빼야 합니다.
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
-            label: '탐색',
+            icon: const Icon(Icons.explore_outlined),
+            selectedIcon: const Icon(Icons.explore),
+            label: l10n.tabDiscover, // "탐색"
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: '채팅',
+            icon: const Icon(Icons.chat_bubble_outline),
+            selectedIcon: const Icon(Icons.chat_bubble),
+            label: l10n.tabChat, // "채팅"
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: '프로필',
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
+            label: l10n.tabProfile, // "프로필"
           ),
         ],
       ),

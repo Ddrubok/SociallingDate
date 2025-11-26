@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timeago/timeago.dart' as timeago;
+// [중요] 번역 파일 임포트
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../models/chat_room_model.dart';
 import 'chat_room_screen.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -24,14 +26,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // [번역] 변수 선언
+    final l10n = AppLocalizations.of(context)!;
     final currentUserId = context.read<AuthProvider>().currentUserId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('채팅')),
+      appBar: AppBar(title: Text(l10n.chatListTitle)), // "채팅"
       body: currentUserId == null
-          ? const Center(
-              // 사용자가 로그인하지 않았거나 ID를 가져올 수 없는 경우
-              child: Text('로그인이 필요합니다.'),
+          ? Center(
+              // (로그인 상태가 아니면 접근 불가하겠지만 예외 처리)
+              child: Text(l10n.error),
             )
           : StreamBuilder<List<ChatRoomModel>>(
               stream: _chatService.getChatRoomsStream(currentUserId),
@@ -41,7 +45,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('오류: ${snapshot.error}'));
+                  return Center(
+                    child: Text('${l10n.error}: ${snapshot.error}'),
+                  );
                 }
 
                 final chatRooms = snapshot.data ?? [];
@@ -58,7 +64,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '아직 채팅이 없습니다',
+                          l10n.noConversations, // "아직 대화가 없습니다"
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -76,15 +82,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final unreadCount = room.getUnreadCountForUser(
                       currentUserId,
                     );
+                    final otherUserName = room.getOtherParticipantName(
+                      currentUserId,
+                    );
 
                     return ListTile(
                       leading: CircleAvatar(
                         child: Text(
-                          room.getOtherParticipantName(currentUserId)[0],
+                          otherUserName.isNotEmpty ? otherUserName[0] : '?',
                         ),
                       ),
                       title: Text(
-                        room.getOtherParticipantName(currentUserId),
+                        otherUserName,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
@@ -108,7 +117,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             room.lastMessageAt != null
                                 ? timeago.format(
                                     room.lastMessageAt!,
-                                    locale: 'ko',
+                                    locale: Localizations.localeOf(
+                                      context,
+                                    ).languageCode, // 현재 언어에 맞게 시간 표시
                                   )
                                 : '',
                             style: TextStyle(
@@ -145,9 +156,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           MaterialPageRoute(
                             builder: (context) => ChatRoomScreen(
                               roomId: room.roomId,
-                              otherUserName: room.getOtherParticipantName(
-                                currentUserId,
-                              ),
+                              otherUserName: otherUserName,
                               otherUserId: room.getOtherParticipantId(
                                 currentUserId,
                               ),

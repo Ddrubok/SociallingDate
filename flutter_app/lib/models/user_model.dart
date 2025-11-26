@@ -15,9 +15,11 @@ class UserModel {
   final bool isBlocked;
   final List<String> blockedUsers;
   final int reportCount;
-  final double? latitude; // [추가]
-  final double? longitude; // [추가]
-  final bool isSharingLocation; // [추가]
+
+  // [추가] 위치 공유 관련 필드
+  final double? latitude;
+  final double? longitude;
+  final bool isSharingLocation;
 
   UserModel({
     required this.uid,
@@ -34,6 +36,7 @@ class UserModel {
     this.isBlocked = false,
     this.blockedUsers = const [],
     this.reportCount = 0,
+    // [추가] 초기화
     this.latitude,
     this.longitude,
     this.isSharingLocation = false,
@@ -55,6 +58,10 @@ class UserModel {
       isBlocked: data['isBlocked'] as bool? ?? false,
       blockedUsers: List<String>.from(data['blockedUsers'] as List? ?? []),
       reportCount: data['reportCount'] as int? ?? 0,
+      // [추가] Firestore 데이터 매핑
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
+      isSharingLocation: data['isSharingLocation'] as bool? ?? false,
     );
   }
 
@@ -76,6 +83,10 @@ class UserModel {
       'isBlocked': isBlocked,
       'blockedUsers': blockedUsers,
       'reportCount': reportCount,
+      // [추가] Firestore 저장
+      'latitude': latitude,
+      'longitude': longitude,
+      'isSharingLocation': isSharingLocation,
     };
   }
 
@@ -94,6 +105,9 @@ class UserModel {
     bool? isBlocked,
     List<String>? blockedUsers,
     int? reportCount,
+    double? latitude,
+    double? longitude,
+    bool? isSharingLocation,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -110,6 +124,9 @@ class UserModel {
       isBlocked: isBlocked ?? this.isBlocked,
       blockedUsers: blockedUsers ?? this.blockedUsers,
       reportCount: reportCount ?? this.reportCount,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      isSharingLocation: isSharingLocation ?? this.isSharingLocation,
     );
   }
 }

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
+import 'package:flutter_app/l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  // 이메일 문의 보내기
   Future<void> _sendEmail(BuildContext context) async {
-    // 대표님의 이메일 주소로 설정하세요
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
-      path: 'support@example.com', // 대표님 이메일
+      path: 'support@example.com',
       queryParameters: {
         'subject': '[블룸 문의] 앱 사용 관련 문의',
         'body': '사용 중인 기기: \n회원 ID: \n\n문의 내용:\n',
@@ -31,56 +31,132 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16.0),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              '지원',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+              l10n.supportSection,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.mail_outline),
-            title: const Text('문의하기 / 피드백 보내기'),
-            subtitle: const Text('버그 제보나 건의사항을 보내주세요'),
+            title: Text(l10n.contactUs),
+            subtitle: Text(l10n.contactUsSubtitle),
             onTap: () => _sendEmail(context),
           ),
           ListTile(
             leading: const Icon(Icons.policy_outlined),
-            title: const Text('서비스 이용약관'),
-            onTap: () {
-              // 나중에 웹뷰나 노션 페이지 연결
-            },
+            title: Text(l10n.termsOfService),
+            onTap: () {},
           ),
           const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(16.0),
+
+          // [수정] 언어 설정 (다이얼로그 내부 로직 개선)
+          ListTile(
+            leading: const Icon(Icons.language),
+            title: Text(l10n.language),
+            trailing: Text(
+              context.watch<LocaleProvider>().locale.languageCode == 'ko'
+                  ? l10n.korean
+                  : l10n.english,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(l10n.selectLanguage),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // [수정] RadioListTile 사용 (Deprecated 해결)
+                      RadioListTile<String>(
+                        title: Text(l10n.korean),
+                        value: 'ko',
+                        groupValue: context
+                            .read<LocaleProvider>()
+                            .locale
+                            .languageCode,
+                        onChanged: (value) {
+                          context.read<LocaleProvider>().setLocale(
+                            const Locale('ko'),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+                      RadioListTile<String>(
+                        title: Text(l10n.english),
+                        value: 'en',
+                        groupValue: context
+                            .read<LocaleProvider>()
+                            .locale
+                            .languageCode,
+                        onChanged: (value) {
+                          context.read<LocaleProvider>().setLocale(
+                            const Locale('en'),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+
+                      RadioListTile<String>(
+                        title: const Text('日本語'), // "일본어"라고 써도 되고 "日本語"라고 써도 됨
+                        value: 'ja',
+                        groupValue: context
+                            .read<LocaleProvider>()
+                            .locale
+                            .languageCode,
+                        onChanged: (value) {
+                          context.read<LocaleProvider>().setLocale(
+                            const Locale('ja'),
+                          );
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              '계정',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+              l10n.accountSection,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+            title: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
             onTap: () async {
-              // 기존 로그아웃 로직 이동
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('로그아웃'),
-                  content: const Text('정말 로그아웃 하시겠습니까?'),
+                  title: Text(l10n.logout),
+                  content: Text(l10n.logoutConfirm),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('취소'),
+                      child: Text(l10n.cancel),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('로그아웃'),
+                      child: Text(l10n.logout),
                     ),
                   ],
                 ),
@@ -94,12 +170,11 @@ class SettingsScreen extends StatelessWidget {
               }
             },
           ),
-          // 앱 버전 표시
           const Padding(
             padding: EdgeInsets.all(24.0),
             child: Center(
               child: Text(
-                '현재 버전 1.0.0 (Beta)',
+                'Version 1.0.0 (Beta)',
                 style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ),

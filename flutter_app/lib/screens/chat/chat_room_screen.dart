@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../services/user_service.dart';
+import '../../services/location_service.dart';
 import '../../models/chat_room_model.dart';
-import '../../models/user_model.dart'; // [추가] UserModel 사용을 위해 필요
+import '../../models/user_model.dart';
 import '../profile/user_profile_screen.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import '../../services/location_service.dart'; // [추가]
 
 class ChatRoomScreen extends StatefulWidget {
   final String roomId;
@@ -28,20 +30,20 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final ChatService _chatService = ChatService();
   final UserService _userService = UserService();
+  final LocationService _locationService = LocationService();
+
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final LocationService _locationService = LocationService(); // [추가]
-  bool _isSharing = false; // 내 공유 상태
 
-  // [추가] 상대방의 전체 정보를 저장할 변수 (사진 포함)
   UserModel? _otherUser;
+  bool _isSharing = false;
 
   @override
   void initState() {
     super.initState();
-    timeago.setLocaleMessages('ko', timeago.KoMessages());
     _markAsRead();
-    _loadOtherUserProfile(); // [추가] 입장 시 상대방 정보 로드
+    _loadOtherUserProfile();
+    _checkMyLocationStatus();
   }
 
   @override
@@ -51,42 +53,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     super.dispose();
   }
 
-  Future<void> _toggleLocationSharing() async {
-    final userId = context.read<AuthProvider>().currentUserId;
-    if (userId == null) return;
-
-    if (_isSharing) {
-      // 공유 끄기
-      await _userService.stopSharingLocation(userId);
-      setState(() => _isSharing = false);
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('위치 공유를 껐습니다.')));
-    } else {
-      // 공유 켜기
-      final pos = await _locationService.getCurrentLocation();
-      if (pos != null) {
-        await _userService.updateUserLocation(
-          userId,
-          pos.latitude,
-          pos.longitude,
-        );
-        setState(() => _isSharing = true);
-        if (mounted)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('위치 공유를 시작했습니다. 상단에 거리가 표시됩니다.')),
-          );
-      } else {
-        if (mounted)
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('위치 권한이 필요합니다.')));
-      }
-    }
-  }
-
-  // [추가] 상대방 프로필 정보(사진 등) 불러오기
   Future<void> _loadOtherUserProfile() async {
     try {
       final user = await _userService.getUser(widget.otherUserId);
@@ -96,7 +62,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         });
       }
     } catch (e) {
-      // 로드 실패 시 조용히 넘어감 (기본 아이콘 표시)
+      // ignore
+    }
+  }
+
+  Future<void> _checkMyLocationStatus() async {
+    final user = context.read<AuthProvider>().currentUserProfile;
+    if (user != null) {
+      setState(() {
+        _isSharing = user.isSharingLocation;
+      });
     }
   }
 
@@ -125,14 +100,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       if (mounted) {
         _messageController.text = text;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('메시지 전송 실패')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${AppLocalizations.of(context)!.error}: 메시지 전송 실패'),
+          ),
+        );
       }
     }
   }
 
-  // [수정] 이미 불러온 _otherUser 정보를 활용하여 즉시 이동
   void _navigateToUserProfile() {
     if (_otherUser != null) {
       Navigator.push(
@@ -142,7 +118,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ),
       );
     } else {
-      // 만약 아직 로드되지 않았다면 다시 시도 (기존 로직)
       _userService.getUser(widget.otherUserId).then((user) {
         if (user != null && mounted) {
           Navigator.push(
@@ -157,29 +132,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _showMannerRatingDialog() async {
+    final l10n = AppLocalizations.of(context)!;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('매너 평가'),
-        content: Text(
-          '${widget.otherUserName}님과의 대화는 어떠셨나요?\n솔직한 평가는 안전한 커뮤니티를 만듭니다.',
-        ),
+        title: Text(l10n.mannerRating),
+        content: Text(l10n.ratingContent),
         actions: [
-          TextButton.icon(
+          TextButton(
             onPressed: () {
               _rateUser(0.5);
               Navigator.pop(context);
             },
-            icon: const Icon(Icons.thumb_up, color: Colors.blue),
-            label: const Text('좋아요'),
+            child: Text(l10n.ratingGood),
           ),
-          TextButton.icon(
+          TextButton(
             onPressed: () {
               _rateUser(-0.5);
               Navigator.pop(context);
             },
-            icon: const Icon(Icons.thumb_down, color: Colors.red),
-            label: const Text('아쉬워요'),
+            child: Text(l10n.ratingBad),
           ),
         ],
       ),
@@ -187,36 +159,69 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _rateUser(double scoreChange) async {
-    try {
-      await _userService.updateMannerScore(widget.otherUserId, scoreChange);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              scoreChange > 0 ? '따뜻한 평가를 남겼습니다! 온도가 올라갑니다.' : '평가가 반영되었습니다.',
-            ),
-            backgroundColor: scoreChange > 0 ? Colors.blue : Colors.grey,
-          ),
-        );
-      }
-    } catch (e) {
-      // 에러 처리
+    final l10n = AppLocalizations.of(context)!;
+    await _userService.updateMannerScore(widget.otherUserId, scoreChange);
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.ratingSubmitted)));
     }
+  }
+
+  Future<void> _toggleLocationSharing() async {
+    final l10n = AppLocalizations.of(context)!;
+    final userId = context.read<AuthProvider>().currentUserId;
+    if (userId == null) return;
+
+    if (_isSharing) {
+      await _userService.stopSharingLocation(userId);
+      setState(() => _isSharing = false);
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.locationSharingStop)));
+    } else {
+      final pos = await _locationService.getCurrentLocation();
+      if (pos != null) {
+        await _userService.updateUserLocation(
+          userId,
+          pos.latitude,
+          pos.longitude,
+        );
+        setState(() => _isSharing = true);
+        if (mounted)
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.locationSharingStart)));
+      } else {
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.locationPermissionNeeded)),
+          );
+      }
+    }
+  }
+
+  String _formatTime(DateTime? timestamp, String localeCode) {
+    if (timestamp == null) return '';
+    return DateFormat.jm(localeCode).format(timestamp);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentUserId = context.read<AuthProvider>().currentUserId;
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 0,
         title: InkWell(
           onTap: _navigateToUserProfile,
           child: Row(
             children: [
-              // [수정] 상단 프로필 사진 표시
               CircleAvatar(
-                radius: 16,
+                radius: 18,
                 backgroundColor: Colors.grey[200],
                 backgroundImage:
                     _otherUser?.profileImageUrl != null &&
@@ -229,8 +234,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ? const Icon(Icons.person, size: 20, color: Colors.grey)
                     : null,
               ),
-              const SizedBox(width: 8),
-              Text(widget.otherUserName, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 10),
+              Text(
+                widget.otherUserName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
@@ -239,53 +250,101 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             icon: Icon(_isSharing ? Icons.location_on : Icons.location_off),
             color: _isSharing ? Colors.green : Colors.grey,
             onPressed: _toggleLocationSharing,
-            tooltip: '위치 공유',
+            tooltip: l10n.discoverTitle,
           ),
-
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'rate') {
-                _showMannerRatingDialog();
-              }
+              if (value == 'rate') _showMannerRatingDialog();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'rate',
-                child: Row(
-                  children: [
-                    Icon(Icons.how_to_vote, color: Colors.amber),
-                    SizedBox(width: 8),
-                    Text('매너 평가하기'),
-                  ],
-                ),
-              ),
+              PopupMenuItem(value: 'rate', child: Text(l10n.rateManner)),
             ],
           ),
         ],
       ),
       body: Column(
         children: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(widget.otherUserId)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox();
+              final data = snapshot.data!.data() as Map<String, dynamic>?;
+              if (data == null || data['isSharingLocation'] != true)
+                return const SizedBox();
+
+              return FutureBuilder(
+                future: _locationService.getCurrentLocation(),
+                builder: (context, myPosSnapshot) {
+                  if (!myPosSnapshot.hasData) {
+                    return Container(
+                      color: Colors.blue[50],
+                      padding: const EdgeInsets.all(8),
+                      width: double.infinity,
+                      child: const Center(
+                        child: Text("...", style: TextStyle(fontSize: 12)),
+                      ),
+                    );
+                  }
+                  final myPos = myPosSnapshot.data!;
+                  final otherLat = data['latitude'] as double?;
+                  final otherLng = data['longitude'] as double?;
+                  if (otherLat == null || otherLng == null)
+                    return const SizedBox();
+
+                  final distance = _locationService.getDistanceInMeters(
+                    myPos.latitude,
+                    myPos.longitude,
+                    otherLat,
+                    otherLng,
+                  );
+                  String distanceText = distance <= 3000
+                      ? l10n.nearbyLabel
+                      : (distance > 1000
+                            ? '${(distance / 1000).toStringAsFixed(1)}km'
+                            : '${distance.toStringAsFixed(0)}m');
+
+                  return Container(
+                    color: Colors.blue[50],
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.place, size: 16, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.distanceLabel(distanceText),
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           Expanded(
             child: StreamBuilder<List<MessageModel>>(
               stream: _chatService.getMessagesStream(widget.roomId),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('오류: ${snapshot.error}'));
-                }
-
-                final messages = snapshot.data ?? [];
-
-                if (messages.isEmpty) {
+                final messages = snapshot.data!;
+                if (messages.isEmpty)
                   return Center(
                     child: Text(
-                      '메시지를 보내보세요!',
+                      l10n.emptyChat,
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   );
-                }
 
                 return ListView.builder(
                   controller: _scrollController,
@@ -295,17 +354,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isMe = message.senderId == currentUserId;
-
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         mainAxisAlignment: isMe
                             ? MainAxisAlignment.end
                             : MainAxisAlignment.start,
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start, // [수정] 프로필 사진 높이 정렬
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // [수정] 상대방 메시지 옆 프로필 사진 (클릭 가능)
                           if (!isMe)
                             GestureDetector(
                               onTap: _navigateToUserProfile,
@@ -330,49 +386,51 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             ),
                           if (!isMe) const SizedBox(width: 8),
                           Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isMe
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.grey[200],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
+                            child: Column(
+                              crossAxisAlignment: isMe
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isMe
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(16)
+                                        .copyWith(
+                                          topLeft: isMe
+                                              ? const Radius.circular(16)
+                                              : const Radius.circular(0),
+                                          topRight: isMe
+                                              ? const Radius.circular(0)
+                                              : const Radius.circular(16),
+                                        ),
+                                  ),
+                                  child: Text(
                                     message.text,
                                     style: TextStyle(
                                       color: isMe
                                           ? Colors.white
                                           : Colors.black87,
+                                      fontSize: 15,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    message.timestamp != null
-                                        ? timeago.format(
-                                            message.timestamp!,
-                                            locale: 'ko',
-                                          )
-                                        : '',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isMe
-                                          ? Colors.white70
-                                          : Colors.grey[600],
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatTime(message.timestamp, localeCode),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey[600],
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                          // (내 프로필 사진 표시는 선택사항이라 제외하거나 유지)
-                          if (isMe) const SizedBox(width: 8),
                         ],
                       ),
                     );
@@ -387,7 +445,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  // [수정] 최신 코드로 변경: withValues(alpha: 0.05)
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -400,15 +459,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     child: TextField(
                       controller: _messageController,
                       decoration: InputDecoration(
-                        hintText: '메시지를 입력하세요...',
+                        hintText: l10n.messageInputHint,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
                         ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 10,
                         ),
                       ),
+                      textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),

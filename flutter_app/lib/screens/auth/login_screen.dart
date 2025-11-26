@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+// [중요] 번역 파일 임포트 (경로 확인!)
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import 'signup_screen.dart';
 
@@ -26,16 +28,22 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // [번역] 비동기 호출 전에 l10n 변수를 미리 확보해두는 것이 안전합니다.
+    final l10n = AppLocalizations.of(context)!;
     final authProvider = context.read<AuthProvider>();
+
     final success = await authProvider.signIn(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
-    if (!success && mounted) {
+    // [안전] 비동기 작업 후 화면이 살아있는지 확인
+    if (!mounted) return;
+
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? '로그인에 실패했습니다'),
+          content: Text(authProvider.error ?? l10n.loginFailed), // "로그인 실패"
           backgroundColor: Colors.red,
         ),
       );
@@ -44,6 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // [번역] build 메서드 안에서 l10n 변수 선언
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -63,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    '소셜매칭',
+                    l10n.appTitle, // "소셜매칭"
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.primary,
@@ -72,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '진정성 있는 관계를 시작하세요',
+                    l10n.loginSubtitle, // "진정성 있는 관계를 시작하세요"
                     style: Theme.of(
                       context,
                     ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -85,7 +96,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: '이메일',
+                      labelText: l10n.emailLabel, // "이메일"
+                      hintText: l10n.emailHint, // "이메일을 입력하세요"
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -93,10 +105,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '이메일을 입력해주세요';
+                        return l10n.emailEmpty; // "이메일을 입력해주세요"
                       }
                       if (!value.contains('@')) {
-                        return '올바른 이메일 형식이 아닙니다';
+                        return l10n.emailInvalid; // "올바른 이메일 형식이 아닙니다"
                       }
                       return null;
                     },
@@ -108,7 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      labelText: '비밀번호',
+                      labelText: l10n.passwordLabel, // "비밀번호"
+                      hintText: l10n.passwordHint, // "비밀번호를 입력하세요"
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -128,10 +141,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return '비밀번호를 입력해주세요';
+                        return l10n.passwordEmpty; // "비밀번호를 입력해주세요"
                       }
                       if (value.length < 6) {
-                        return '비밀번호는 최소 6자 이상이어야 합니다';
+                        return l10n.passwordLength; // "비밀번호는 최소 6자 이상이어야 합니다"
                       }
                       return null;
                     },
@@ -157,9 +170,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                '로그인',
-                                style: TextStyle(
+                            : Text(
+                                l10n.loginButton, // "로그인"
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -171,27 +184,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // 회원가입 버튼
                   OutlinedButton(
-                    onPressed: () async {
-                      // [수정] async 추가
-
-                      // [수정] SignUpScreen이 닫힐 때 반환하는 값을 기다립니다.
-                      final bool? signupSuccess = await Navigator.push<bool>(
+                    onPressed: () {
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const SignUpScreen(),
                         ),
                       );
-
-                      // [추가] 만약 SignUpScreen이 'true'를 반환했다면 (성공했다면)
-                      if (signupSuccess == true && mounted) {
-                        // 대표님이 요청한 성공 메시지를 LoginScreen에서 띄웁니다.
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('회원가입이 성공했습니다. 로그인을 시도해주세요.'),
-                            backgroundColor: Colors.green, // 성공 피드백
-                          ),
-                        );
-                      }
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -199,9 +198,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      '회원가입',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.signUpButton, // "가입하기" (또는 회원가입)
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),

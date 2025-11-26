@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-// [수정 1] 설정 화면을 불러오기 위해 import 추가
+// [중요] 번역 파일 및 설정 화면 임포트
+import 'package:flutter_app/l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
+import '../../providers/auth_provider.dart';
 
 class MyProfileScreen extends StatelessWidget {
   const MyProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // [번역] 변수 선언
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('내 프로필'),
+        title: Text(l10n.myProfileTitle), // "내 프로필"
         actions: [
-          // [수정 2] 기존 로그아웃 버튼 및 로직을 모두 지우고, 설정 버튼으로 깔끔하게 교체
+          // [변경] 로그아웃 버튼 대신 '설정' 버튼으로 변경
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
@@ -56,7 +60,7 @@ class MyProfileScreen extends StatelessWidget {
                       Icon(Icons.verified, size: 20, color: Colors.blue[600]),
                     if (user.authStatus == 'verified') const SizedBox(width: 4),
                     Text(
-                      '${user.age}세 · ${user.location}',
+                      '${user.age} · ${user.location}', // 나이/지역은 데이터 그대로 표시
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
@@ -77,7 +81,8 @@ class MyProfileScreen extends StatelessWidget {
                       Icon(Icons.favorite, color: Colors.pink[300]),
                       const SizedBox(width: 8),
                       Text(
-                        '매너온도 ${user.mannerScore.toStringAsFixed(1)}°',
+                        // "매너온도 36.5°"
+                        '${l10n.mannerTemperature} ${user.mannerScore.toStringAsFixed(1)}°',
                         style: TextStyle(
                           color: Colors.pink[700],
                           fontWeight: FontWeight.bold,
@@ -94,7 +99,7 @@ class MyProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '자기소개',
+                        l10n.bioLabel, // "자기소개"
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
@@ -102,7 +107,7 @@ class MyProfileScreen extends StatelessWidget {
                       Text(user.bio, style: TextStyle(color: Colors.grey[700])),
                       const SizedBox(height: 24),
                       Text(
-                        '관심사',
+                        l10n.interestsLabel, // "관심사"
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),

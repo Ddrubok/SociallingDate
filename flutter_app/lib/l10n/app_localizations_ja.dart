@@ -1,0 +1,255 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Japanese (`ja`).
+class AppLocalizationsJa extends AppLocalizations {
+  AppLocalizationsJa([String locale = 'ja']) : super(locale);
+
+  @override
+  String get appTitle => 'ソーシャルマッチング';
+
+  @override
+  String get ok => '確認';
+
+  @override
+  String get cancel => 'キャンセル';
+
+  @override
+  String get close => '閉じる';
+
+  @override
+  String get error => 'エラー';
+
+  @override
+  String get confirm => '確認';
+
+  @override
+  String get loginTitle => 'ログイン';
+
+  @override
+  String get loginSubtitle => '真剣な出会いを始めましょう';
+
+  @override
+  String get loginButton => 'ログイン';
+
+  @override
+  String get emailLabel => 'メールアドレス';
+
+  @override
+  String get emailHint => 'メールアドレスを入力';
+
+  @override
+  String get emailEmpty => 'メールアドレスを入力してください';
+
+  @override
+  String get emailInvalid => '無効なメールアドレス形式です';
+
+  @override
+  String get passwordLabel => 'パスワード';
+
+  @override
+  String get passwordHint => 'パスワードを入力';
+
+  @override
+  String get passwordEmpty => 'パスワードを入力してください';
+
+  @override
+  String get passwordLength => 'パスワードは6文字以上必要です';
+
+  @override
+  String get noAccount => 'アカウントをお持ちでないですか？';
+
+  @override
+  String get signUpLink => '会員登録';
+
+  @override
+  String get loginFailed => 'ログイン失敗';
+
+  @override
+  String get signUpTitle => '会員登録';
+
+  @override
+  String get signUpButton => '登録する';
+
+  @override
+  String get nameLabel => '名前';
+
+  @override
+  String get ageLabel => '年齢';
+
+  @override
+  String get genderLabel => '性別';
+
+  @override
+  String get male => '男性';
+
+  @override
+  String get female => '女性';
+
+  @override
+  String get locationLabel => '地域';
+
+  @override
+  String get bioLabel => '自己紹介';
+
+  @override
+  String get interestsLabel => '興味';
+
+  @override
+  String get selectProfileImage => 'プロフィール写真を選択してください';
+
+  @override
+  String get selectInterestsHint => '興味 (3つ以上選択)';
+
+  @override
+  String get interestError => '興味を3つ以上選択してください';
+
+  @override
+  String get signUpComplete => '会員登録が完了しました！';
+
+  @override
+  String get signUpError => '会員登録に失敗しました';
+
+  @override
+  String get tabHome => 'ホーム';
+
+  @override
+  String get tabDiscover => '探す';
+
+  @override
+  String get tabChat => 'チャット';
+
+  @override
+  String get tabProfile => 'プロフィール';
+
+  @override
+  String get discoverTitle => '探す';
+
+  @override
+  String get filterTitle => '興味フィルター';
+
+  @override
+  String get reset => 'リセット';
+
+  @override
+  String get apply => '適用';
+
+  @override
+  String get noUsersFound => 'マッチするユーザーがいません';
+
+  @override
+  String get chatListTitle => 'チャット';
+
+  @override
+  String get noConversations => 'まだ会話がありません';
+
+  @override
+  String get messageInputHint => 'メッセージを入力...';
+
+  @override
+  String get send => '送信';
+
+  @override
+  String get emptyChat => 'メッセージを送ってみましょう！';
+
+  @override
+  String get mannerRating => 'マナー評価';
+
+  @override
+  String get rateManner => 'マナーを評価する';
+
+  @override
+  String get ratingGood => '良い';
+
+  @override
+  String get ratingBad => '残念';
+
+  @override
+  String get ratingContent => '会話はいかがでしたか？ 率直な評価はコミュニティの役に立ちます。';
+
+  @override
+  String get ratingSubmitted => '評価が反映されました。';
+
+  @override
+  String get locationSharingStart => '位置情報の共有を開始しました！相手に現在地が表示されます。';
+
+  @override
+  String get locationSharingStop => '位置情報の共有を停止しました。';
+
+  @override
+  String get locationPermissionNeeded => '位置情報の権限が必要です。';
+
+  @override
+  String distanceLabel(String distance) {
+    return '相手との距離: $distance';
+  }
+
+  @override
+  String get nearbyLabel => '近く (3km以内)';
+
+  @override
+  String get myProfileTitle => 'マイプロフィール';
+
+  @override
+  String get userProfileTitle => 'プロフィール';
+
+  @override
+  String get mannerTemperature => 'マナー温度';
+
+  @override
+  String get startChat => 'チャットする';
+
+  @override
+  String get report => '通報する';
+
+  @override
+  String get block => 'ブロックする';
+
+  @override
+  String get unblock => 'ブロック解除';
+
+  @override
+  String get reportReasonTitle => '通報理由を選択';
+
+  @override
+  String get blockConfirm => '本当にブロックしますか？';
+
+  @override
+  String get settingsTitle => '設定';
+
+  @override
+  String get supportSection => 'サポート';
+
+  @override
+  String get contactUs => 'お問い合わせ / フィードバック';
+
+  @override
+  String get contactUsSubtitle => 'バグ報告や機能提案';
+
+  @override
+  String get termsOfService => '利用規約';
+
+  @override
+  String get accountSection => 'アカウント';
+
+  @override
+  String get logout => 'ログアウト';
+
+  @override
+  String get logoutConfirm => '本当にログアウトしますか？';
+
+  @override
+  String get language => '言語';
+
+  @override
+  String get selectLanguage => '言語選択';
+
+  @override
+  String get korean => '韓国語';
+
+  @override
+  String get english => '英語';
+}

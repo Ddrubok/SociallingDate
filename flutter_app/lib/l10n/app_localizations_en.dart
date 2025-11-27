@@ -254,4 +254,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get tabSocialing => 'Socialing';
+
+  @override
+  String get createSocialing => 'Create Meetup';
+
+  @override
+  String get socialingTitle => 'Socialing';
+
+  @override
+  String get socialingDate => 'Date';
+
+  @override
+  String get socialingLocation => 'Location';
+
+  @override
+  String get socialingMembers => 'Members';
+
+  @override
+  String get socialingJoin => 'Join';
+
+  @override
+  String get socialingJoined => 'Joined';
+
+  @override
+  String get socialingFull => 'Full';
+
+  @override
+  String get titleHint => 'Enter title';
+
+  @override
+  String get contentHint => 'What is this meetup about?';
+
+  @override
+  String get maxMembersHint => 'Max members';
+
+  @override
+  String get dateHint => 'Select Date';
+
+  @override
+  String get timeHint => 'Select Time';
+
+  @override
+  String get locationHint => 'Enter location';
+
+  @override
+  String get createSuccess => 'Meetup created.';
+
+  @override
+  String get joinSuccess => 'Joined meetup.';
+
+  @override
+  String get leaveChat => 'Leave Chat';
+
+  @override
+  String get leaveChatConfirm =>
+      'Are you sure you want to leave? It will be removed from your list.';
+
+  @override
+  String get leave => 'Leave';
 }

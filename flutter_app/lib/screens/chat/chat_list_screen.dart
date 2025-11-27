@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-// [중요] 번역 파일 임포트
 import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
@@ -26,17 +25,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // [번역] 변수 선언
     final l10n = AppLocalizations.of(context)!;
     final currentUserId = context.read<AuthProvider>().currentUserId;
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.chatListTitle)), // "채팅"
+      appBar: AppBar(title: Text(l10n.chatListTitle)),
       body: currentUserId == null
-          ? Center(
-              // (로그인 상태가 아니면 접근 불가하겠지만 예외 처리)
-              child: Text(l10n.error),
-            )
+          ? Center(child: Text(l10n.error))
           : StreamBuilder<List<ChatRoomModel>>(
               stream: _chatService.getChatRoomsStream(currentUserId),
               builder: (context, snapshot) {
@@ -64,7 +60,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          l10n.noConversations, // "아직 대화가 없습니다"
+                          l10n.noConversations,
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -82,19 +78,41 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     final unreadCount = room.getUnreadCountForUser(
                       currentUserId,
                     );
-                    final otherUserName = room.getOtherParticipantName(
-                      currentUserId,
-                    );
+
+                    // [수정] 채팅방 타입에 따라 정보 결정
+                    final isGroup = room.type == 'group';
+                    final String displayTitle;
+                    final String targetUserId; // 1:1일 때만 사용
+
+                    if (isGroup) {
+                      displayTitle = room.title; // 그룹명
+                      targetUserId = ''; // 그룹은 상대 ID 없음
+                    } else {
+                      displayTitle = room.getOtherParticipantName(
+                        currentUserId,
+                      ); // 상대 이름
+                      targetUserId = room.getOtherParticipantId(currentUserId);
+                    }
 
                     return ListTile(
                       leading: CircleAvatar(
-                        child: Text(
-                          otherUserName.isNotEmpty ? otherUserName[0] : '?',
-                        ),
+                        backgroundColor: isGroup
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : null,
+                        child: isGroup
+                            ? const Icon(
+                                Icons.groups,
+                                color: Colors.black54,
+                              ) // [그룹 아이콘]
+                            : Text(
+                                displayTitle.isNotEmpty ? displayTitle[0] : '?',
+                              ), // [이니셜]
                       ),
                       title: Text(
-                        otherUserName,
+                        displayTitle,
                         style: const TextStyle(fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: Text(
                         room.lastMessage,
@@ -117,9 +135,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             room.lastMessageAt != null
                                 ? timeago.format(
                                     room.lastMessageAt!,
-                                    locale: Localizations.localeOf(
-                                      context,
-                                    ).languageCode, // 현재 언어에 맞게 시간 표시
+                                    locale: localeCode,
                                   )
                                 : '',
                             style: TextStyle(
@@ -151,15 +167,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ],
                       ),
                       onTap: () {
+                        // [수정] 채팅방 입장 시 올바른 인자 전달
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatRoomScreen(
                               roomId: room.roomId,
-                              otherUserName: otherUserName,
-                              otherUserId: room.getOtherParticipantId(
-                                currentUserId,
-                              ),
+                              otherUserName: displayTitle, // 그룹명 또는 상대 이름
+                              otherUserId: targetUserId, // 그룹이면 빈 문자열('')
                             ),
                           ),
                         );

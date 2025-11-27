@@ -4,6 +4,7 @@ import 'package:flutter_app/l10n/app_localizations.dart';
 import '../home/discover_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../profile/my_profile_screen.dart';
+import '../socialing/socialing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     DiscoverScreen(),
+    SocialingScreen(),
     ChatListScreen(),
     MyProfileScreen(),
   ];
@@ -41,6 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.explore_outlined),
             selectedIcon: const Icon(Icons.explore),
             label: l10n.tabDiscover, // "탐색"
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.groups_outlined),
+            selectedIcon: const Icon(Icons.groups),
+            label: l10n.tabSocialing, // "소셜링"
           ),
           NavigationDestination(
             icon: const Icon(Icons.chat_bubble_outline),

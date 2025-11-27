@@ -88,5 +88,26 @@
   "selectLanguage": "言語選択",
   "korean": "韓国語",
   "english": "英語",
-  "japanese": "日本語"
+  "japanese": "日本語",
+"tabSocialing": "ソーシャリング",
+  "createSocialing": "集まりを作成",
+  "socialingTitle": "ソーシャリング",
+  "socialingDate": "日時",
+  "socialingLocation": "場所",
+  "socialingMembers": "参加メンバー",
+  "socialingJoin": "参加する",
+  "socialingJoined": "参加済み",
+  "socialingFull": "募集締切",
+  "titleHint": "タイトルを入力",
+  "contentHint": "どんな集まりですか？内容を入力してください",
+  "maxMembersHint": "最大人数 (人)",
+  "dateHint": "日付を選択",
+  "timeHint": "時間を選択",
+  "locationHint": "場所を入力",
+  "createSuccess": "集まりを作成しました。",
+  "joinSuccess": "集まりに参加しました。",
+  "leaveChat": "チャットを退出",
+  "leaveChatConfirm": "本当に退出しますか？リストから削除されます。",
+  "leave": "退出"
+
 }

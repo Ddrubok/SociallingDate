@@ -585,6 +585,126 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'English'**
   String get english;
+
+  /// No description provided for @tabSocialing.
+  ///
+  /// In ko, this message translates to:
+  /// **'소셜링'**
+  String get tabSocialing;
+
+  /// No description provided for @createSocialing.
+  ///
+  /// In ko, this message translates to:
+  /// **'모임 개설'**
+  String get createSocialing;
+
+  /// No description provided for @socialingTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'소셜링'**
+  String get socialingTitle;
+
+  /// No description provided for @socialingDate.
+  ///
+  /// In ko, this message translates to:
+  /// **'일시'**
+  String get socialingDate;
+
+  /// No description provided for @socialingLocation.
+  ///
+  /// In ko, this message translates to:
+  /// **'장소'**
+  String get socialingLocation;
+
+  /// No description provided for @socialingMembers.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여 인원'**
+  String get socialingMembers;
+
+  /// No description provided for @socialingJoin.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여하기'**
+  String get socialingJoin;
+
+  /// No description provided for @socialingJoined.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여 중'**
+  String get socialingJoined;
+
+  /// No description provided for @socialingFull.
+  ///
+  /// In ko, this message translates to:
+  /// **'모집 마감'**
+  String get socialingFull;
+
+  /// No description provided for @titleHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목을 입력하세요'**
+  String get titleHint;
+
+  /// No description provided for @contentHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'어떤 모임인가요? 내용을 입력하세요'**
+  String get contentHint;
+
+  /// No description provided for @maxMembersHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 인원 (명)'**
+  String get maxMembersHint;
+
+  /// No description provided for @dateHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜 선택'**
+  String get dateHint;
+
+  /// No description provided for @timeHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'시간 선택'**
+  String get timeHint;
+
+  /// No description provided for @locationHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'장소 입력'**
+  String get locationHint;
+
+  /// No description provided for @createSuccess.
+  ///
+  /// In ko, this message translates to:
+  /// **'모임이 개설되었습니다.'**
+  String get createSuccess;
+
+  /// No description provided for @joinSuccess.
+  ///
+  /// In ko, this message translates to:
+  /// **'모임에 참여했습니다.'**
+  String get joinSuccess;
+
+  /// No description provided for @leaveChat.
+  ///
+  /// In ko, this message translates to:
+  /// **'채팅방 나가기'**
+  String get leaveChat;
+
+  /// No description provided for @leaveChatConfirm.
+  ///
+  /// In ko, this message translates to:
+  /// **'정말 나가시겠습니까? 대화 목록에서 사라집니다.'**
+  String get leaveChatConfirm;
+
+  /// No description provided for @leave.
+  ///
+  /// In ko, this message translates to:
+  /// **'나가기'**
+  String get leave;
 }
 
 class _AppLocalizationsDelegate

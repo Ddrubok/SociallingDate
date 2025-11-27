@@ -252,4 +252,64 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get english => '英語';
+
+  @override
+  String get tabSocialing => 'ソーシャリング';
+
+  @override
+  String get createSocialing => '集まりを作成';
+
+  @override
+  String get socialingTitle => 'ソーシャリング';
+
+  @override
+  String get socialingDate => '日時';
+
+  @override
+  String get socialingLocation => '場所';
+
+  @override
+  String get socialingMembers => '参加メンバー';
+
+  @override
+  String get socialingJoin => '参加する';
+
+  @override
+  String get socialingJoined => '参加済み';
+
+  @override
+  String get socialingFull => '募集締切';
+
+  @override
+  String get titleHint => 'タイトルを入力';
+
+  @override
+  String get contentHint => 'どんな集まりですか？内容を入力してください';
+
+  @override
+  String get maxMembersHint => '最大人数 (人)';
+
+  @override
+  String get dateHint => '日付を選択';
+
+  @override
+  String get timeHint => '時間を選択';
+
+  @override
+  String get locationHint => '場所を入力';
+
+  @override
+  String get createSuccess => '集まりを作成しました。';
+
+  @override
+  String get joinSuccess => '集まりに参加しました。';
+
+  @override
+  String get leaveChat => 'チャットを退出';
+
+  @override
+  String get leaveChatConfirm => '本当に退出しますか？リストから削除されます。';
+
+  @override
+  String get leave => '退出';
 }

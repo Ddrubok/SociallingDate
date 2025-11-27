@@ -87,5 +87,26 @@
   "language": "Language",
   "selectLanguage": "Select Language",
   "korean": "Korean",
-  "english": "English"
+  "english": "English",
+
+  "tabSocialing": "Socialing",
+  "createSocialing": "Create Meetup",
+  "socialingTitle": "Socialing",
+  "socialingDate": "Date",
+  "socialingLocation": "Location",
+  "socialingMembers": "Members",
+  "socialingJoin": "Join",
+  "socialingJoined": "Joined",
+  "socialingFull": "Full",
+  "titleHint": "Enter title",
+  "contentHint": "What is this meetup about?",
+  "maxMembersHint": "Max members",
+  "dateHint": "Select Date",
+  "timeHint": "Select Time",
+  "locationHint": "Enter location",
+  "createSuccess": "Meetup created.",
+  "joinSuccess": "Joined meetup.",
+  "leaveChat": "Leave Chat",
+  "leaveChatConfirm": "Are you sure you want to leave? It will be removed from your list.",
+  "leave": "Leave"
 }

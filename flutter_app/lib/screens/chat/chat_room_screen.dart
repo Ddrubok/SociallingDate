@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_app/l10n/app_localizations.dart';
@@ -7,7 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../services/user_service.dart';
 import '../../services/location_service.dart';
-import '../../models/chat_room_model.dart';
+import '../../models/chat_room_model.dart'; // MessageModel 사용을 위해 필요
 import '../../models/user_model.dart';
 import '../profile/user_profile_screen.dart';
 
@@ -36,14 +37,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final ScrollController _scrollController = ScrollController();
 
   UserModel? _otherUser;
+  final Map<String, UserModel> _participantsCache = {};
   bool _isSharing = false;
+
+  bool get _isGroupChat => widget.otherUserId.isEmpty;
 
   @override
   void initState() {
     super.initState();
     _markAsRead();
-    _loadOtherUserProfile();
     _checkMyLocationStatus();
+
+    if (!_isGroupChat) {
+      _loadOtherUserProfile();
+    } else {
+      _loadGroupParticipants();
+    }
   }
 
   @override
@@ -64,6 +73,45 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     } catch (e) {
       // ignore
     }
+  }
+
+  Future<void> _loadGroupParticipants() async {
+    try {
+      final roomDoc = await FirebaseFirestore.instance
+          .collection('chat_rooms')
+          .doc(widget.roomId)
+          .get();
+      if (!roomDoc.exists) return;
+
+      final participants = List<String>.from(
+        roomDoc.data()?['participants'] ?? [],
+      );
+      for (var userId in participants) {
+        _getUserProfile(userId);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  Future<UserModel?> _getUserProfile(String userId) async {
+    if (_participantsCache.containsKey(userId)) {
+      return _participantsCache[userId];
+    }
+    try {
+      final user = await _userService.getUser(userId);
+      if (user != null) {
+        if (mounted) {
+          setState(() {
+            _participantsCache[userId] = user;
+          });
+        }
+        return user;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
   }
 
   Future<void> _checkMyLocationStatus() async {
@@ -109,29 +157,128 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
-  void _navigateToUserProfile() {
-    if (_otherUser != null) {
+  // [추가] 채팅방 나가기
+  Future<void> _leaveChatRoom() async {
+    final l10n = AppLocalizations.of(context)!;
+    final currentUserId = context.read<AuthProvider>().currentUserId;
+    if (currentUserId == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.leaveChat),
+        content: Text(l10n.leaveChatConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.leave, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _chatService.leaveChatRoom(widget.roomId, currentUserId);
+      if (mounted) {
+        Navigator.pop(context); // 채팅방 목록으로 돌아가기
+      }
+    }
+  }
+
+  void _onTitleTap() {
+    if (_isGroupChat) {
+      _showGroupParticipantsList();
+    } else {
+      _navigateToUserProfile(_otherUser);
+    }
+  }
+
+  void _showGroupParticipantsList() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('chat_rooms')
+              .doc(widget.roomId)
+              .get(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData)
+              return const Center(child: CircularProgressIndicator());
+
+            final data = snapshot.data!.data() as Map<String, dynamic>;
+            final participants = List<String>.from(data['participants'] ?? []);
+
+            return Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    '대화 상대',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: participants.length,
+                    itemBuilder: (context, index) {
+                      final userId = participants[index];
+                      final user = _participantsCache[userId];
+
+                      if (user == null) {
+                        _getUserProfile(userId);
+                        return const ListTile(
+                          leading: CircleAvatar(child: Icon(Icons.person)),
+                          title: Text('...'),
+                        );
+                      }
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(user.profileImageUrl),
+                        ),
+                        title: Text(user.displayName),
+                        subtitle: Text(
+                          user.bio,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _navigateToUserProfile(user);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateToUserProfile(UserModel? user) {
+    if (user != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => UserProfileScreen(user: _otherUser!),
-        ),
+        MaterialPageRoute(builder: (context) => UserProfileScreen(user: user)),
       );
-    } else {
-      _userService.getUser(widget.otherUserId).then((user) {
-        if (user != null && mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UserProfileScreen(user: user),
-            ),
-          );
-        }
-      });
     }
   }
 
   Future<void> _showMannerRatingDialog() async {
+    if (_isGroupChat) return;
+
     final l10n = AppLocalizations.of(context)!;
     await showDialog(
       context: context,
@@ -217,29 +364,38 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       appBar: AppBar(
         titleSpacing: 0,
         title: InkWell(
-          onTap: _navigateToUserProfile,
+          onTap: _onTitleTap,
           child: Row(
             children: [
               CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.grey[200],
                 backgroundImage:
-                    _otherUser?.profileImageUrl != null &&
+                    !_isGroupChat &&
+                        _otherUser?.profileImageUrl != null &&
                         _otherUser!.profileImageUrl.isNotEmpty
                     ? NetworkImage(_otherUser!.profileImageUrl)
                     : null,
-                child:
-                    _otherUser?.profileImageUrl == null ||
-                        _otherUser!.profileImageUrl.isEmpty
-                    ? const Icon(Icons.person, size: 20, color: Colors.grey)
-                    : null,
+                child: _isGroupChat
+                    ? const Icon(Icons.groups, size: 20, color: Colors.grey)
+                    : (_otherUser?.profileImageUrl == null ||
+                              _otherUser!.profileImageUrl.isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              size: 20,
+                              color: Colors.grey,
+                            )
+                          : null),
               ),
               const SizedBox(width: 10),
-              Text(
-                widget.otherUserName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  widget.otherUserName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -252,85 +408,108 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             onPressed: _toggleLocationSharing,
             tooltip: l10n.discoverTitle,
           ),
+
+          // [수정] 메뉴 버튼 (나가기 추가)
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'rate') _showMannerRatingDialog();
+              if (value == 'leave') _leaveChatRoom(); // [연결]
             },
             itemBuilder: (context) => [
-              PopupMenuItem(value: 'rate', child: Text(l10n.rateManner)),
+              if (!_isGroupChat)
+                PopupMenuItem(value: 'rate', child: Text(l10n.rateManner)),
+
+              // [추가] 나가기 버튼
+              PopupMenuItem(
+                value: 'leave',
+                child: Row(
+                  children: [
+                    const Icon(Icons.exit_to_app, color: Colors.red, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.leaveChat,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
       ),
       body: Column(
         children: [
-          StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(widget.otherUserId)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const SizedBox();
-              final data = snapshot.data!.data() as Map<String, dynamic>?;
-              if (data == null || data['isSharingLocation'] != true)
-                return const SizedBox();
+          // 위치 정보 헤더 (1:1)
+          if (!_isGroupChat)
+            StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.otherUserId)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox();
+                final data = snapshot.data!.data() as Map<String, dynamic>?;
+                if (data == null || data['isSharingLocation'] != true)
+                  return const SizedBox();
 
-              return FutureBuilder(
-                future: _locationService.getCurrentLocation(),
-                builder: (context, myPosSnapshot) {
-                  if (!myPosSnapshot.hasData) {
+                return FutureBuilder<Position?>(
+                  future: _locationService.getCurrentLocation(),
+                  builder: (context, myPosSnapshot) {
+                    if (!myPosSnapshot.hasData) {
+                      return Container(
+                        color: Colors.blue[50],
+                        padding: const EdgeInsets.all(8),
+                        width: double.infinity,
+                        child: const Center(
+                          child: Text("...", style: TextStyle(fontSize: 12)),
+                        ),
+                      );
+                    }
+                    final myPos = myPosSnapshot.data!;
+                    final otherLat = data['latitude'] as double?;
+                    final otherLng = data['longitude'] as double?;
+                    if (otherLat == null || otherLng == null)
+                      return const SizedBox();
+
+                    final distance = _locationService.getDistanceInMeters(
+                      myPos.latitude,
+                      myPos.longitude,
+                      otherLat,
+                      otherLng,
+                    );
+                    String distanceText = distance <= 3000
+                        ? l10n.nearbyLabel
+                        : (distance > 1000
+                              ? '${(distance / 1000).toStringAsFixed(1)}km'
+                              : '${distance.toStringAsFixed(0)}m');
+
                     return Container(
                       color: Colors.blue[50],
-                      padding: const EdgeInsets.all(8),
                       width: double.infinity,
-                      child: const Center(
-                        child: Text("...", style: TextStyle(fontSize: 12)),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.place, size: 16, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.distanceLabel(distanceText),
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     );
-                  }
-                  final myPos = myPosSnapshot.data!;
-                  final otherLat = data['latitude'] as double?;
-                  final otherLng = data['longitude'] as double?;
-                  if (otherLat == null || otherLng == null)
-                    return const SizedBox();
+                  },
+                );
+              },
+            ),
 
-                  final distance = _locationService.getDistanceInMeters(
-                    myPos.latitude,
-                    myPos.longitude,
-                    otherLat,
-                    otherLng,
-                  );
-                  String distanceText = distance <= 3000
-                      ? l10n.nearbyLabel
-                      : (distance > 1000
-                            ? '${(distance / 1000).toStringAsFixed(1)}km'
-                            : '${distance.toStringAsFixed(0)}m');
-
-                  return Container(
-                    color: Colors.blue[50],
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.place, size: 16, color: Colors.blue),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.distanceLabel(distanceText),
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+          // 메시지 리스트
           Expanded(
             child: StreamBuilder<List<MessageModel>>(
               stream: _chatService.getMessagesStream(widget.roomId),
@@ -354,6 +533,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isMe = message.senderId == currentUserId;
+
+                    UserModel? senderProfile;
+                    if (!isMe) {
+                      if (_isGroupChat) {
+                        if (!_participantsCache.containsKey(message.senderId)) {
+                          _getUserProfile(message.senderId);
+                        }
+                        senderProfile = _participantsCache[message.senderId];
+                      } else {
+                        senderProfile = _otherUser;
+                      }
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
@@ -364,21 +556,27 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         children: [
                           if (!isMe)
                             GestureDetector(
-                              onTap: _navigateToUserProfile,
+                              onTap: () =>
+                                  _navigateToUserProfile(senderProfile),
                               child: CircleAvatar(
                                 radius: 16,
                                 backgroundColor: Colors.grey[200],
                                 backgroundImage:
-                                    _otherUser?.profileImageUrl != null &&
-                                        _otherUser!.profileImageUrl.isNotEmpty
-                                    ? NetworkImage(_otherUser!.profileImageUrl)
+                                    senderProfile?.profileImageUrl != null &&
+                                        senderProfile!
+                                            .profileImageUrl
+                                            .isNotEmpty
+                                    ? NetworkImage(
+                                        senderProfile.profileImageUrl,
+                                      )
                                     : null,
                                 child:
-                                    _otherUser?.profileImageUrl == null ||
-                                        _otherUser!.profileImageUrl.isEmpty
+                                    senderProfile?.profileImageUrl == null ||
+                                        senderProfile!.profileImageUrl.isEmpty
                                     ? Text(
-                                        widget.otherUserName.isNotEmpty
-                                            ? widget.otherUserName[0]
+                                        senderProfile?.displayName.isNotEmpty ==
+                                                true
+                                            ? senderProfile!.displayName[0]
                                             : '?',
                                       )
                                     : null,
@@ -391,6 +589,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                   ? CrossAxisAlignment.end
                                   : CrossAxisAlignment.start,
                               children: [
+                                if (_isGroupChat &&
+                                    !isMe &&
+                                    senderProfile != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      bottom: 2,
+                                    ),
+                                    child: Text(
+                                      senderProfile.displayName,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -439,13 +654,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               },
             ),
           ),
+
+          // 입력창
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  // [수정] 최신 코드로 변경: withValues(alpha: 0.05)
                   color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),

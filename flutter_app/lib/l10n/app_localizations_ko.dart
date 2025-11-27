@@ -252,4 +252,64 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get tabSocialing => '소셜링';
+
+  @override
+  String get createSocialing => '모임 개설';
+
+  @override
+  String get socialingTitle => '소셜링';
+
+  @override
+  String get socialingDate => '일시';
+
+  @override
+  String get socialingLocation => '장소';
+
+  @override
+  String get socialingMembers => '참여 인원';
+
+  @override
+  String get socialingJoin => '참여하기';
+
+  @override
+  String get socialingJoined => '참여 중';
+
+  @override
+  String get socialingFull => '모집 마감';
+
+  @override
+  String get titleHint => '제목을 입력하세요';
+
+  @override
+  String get contentHint => '어떤 모임인가요? 내용을 입력하세요';
+
+  @override
+  String get maxMembersHint => '최대 인원 (명)';
+
+  @override
+  String get dateHint => '날짜 선택';
+
+  @override
+  String get timeHint => '시간 선택';
+
+  @override
+  String get locationHint => '장소 입력';
+
+  @override
+  String get createSuccess => '모임이 개설되었습니다.';
+
+  @override
+  String get joinSuccess => '모임에 참여했습니다.';
+
+  @override
+  String get leaveChat => '채팅방 나가기';
+
+  @override
+  String get leaveChatConfirm => '정말 나가시겠습니까? 대화 목록에서 사라집니다.';
+
+  @override
+  String get leave => '나가기';
 }

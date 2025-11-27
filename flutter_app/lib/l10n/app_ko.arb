@@ -94,5 +94,26 @@
   "language": "언어",
   "selectLanguage": "언어 선택",
   "korean": "한국어",
-  "english": "English"
+  "english": "English",
+
+  "tabSocialing": "소셜링",
+  "createSocialing": "모임 개설",
+  "socialingTitle": "소셜링",
+  "socialingDate": "일시",
+  "socialingLocation": "장소",
+  "socialingMembers": "참여 인원",
+  "socialingJoin": "참여하기",
+  "socialingJoined": "참여 중",
+  "socialingFull": "모집 마감",
+  "titleHint": "제목을 입력하세요",
+  "contentHint": "어떤 모임인가요? 내용을 입력하세요",
+  "maxMembersHint": "최대 인원 (명)",
+  "dateHint": "날짜 선택",
+  "timeHint": "시간 선택",
+  "locationHint": "장소 입력",
+  "createSuccess": "모임이 개설되었습니다.",
+  "joinSuccess": "모임에 참여했습니다.",
+  "leaveChat": "채팅방 나가기",
+  "leaveChatConfirm": "정말 나가시겠습니까? 대화 목록에서 사라집니다.",
+  "leave": "나가기"
 }

@@ -307,11 +307,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> _rateUser(double scoreChange) async {
     final l10n = AppLocalizations.of(context)!;
-    await _userService.updateMannerScore(widget.otherUserId, scoreChange);
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.ratingSubmitted)));
+
+    try {
+      // [추가] 실제 점수 반영 로직 (이 부분이 빠져 있었습니다!)
+      await _userService.updateMannerScore(widget.otherUserId, scoreChange);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.ratingSubmitted)), // "평가가 반영되었습니다."
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${l10n.error}: $e')));
+      }
     }
   }
 

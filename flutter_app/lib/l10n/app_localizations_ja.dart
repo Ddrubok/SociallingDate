@@ -312,4 +312,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get leave => '退出';
+
+  @override
+  String get sendLike => 'いいねを送る';
+
+  @override
+  String get acceptLikeAndChat => 'いいねを受け入れてチャット';
+
+  @override
+  String get likeSentMessage => 'いいねを送りました！相手の反応を待ちましょう。';
+
+  @override
+  String get matchSuccessMessage => 'マッチングしました！チャットを始めましょう。🎉';
 }

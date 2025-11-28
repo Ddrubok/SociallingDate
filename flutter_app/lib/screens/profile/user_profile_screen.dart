@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_app/l10n/app_localizations.dart';
+import 'package:flutter_app/l10n/app_localizations.dart'; // 번역 파일 임포트
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
 import '../../services/user_service.dart';
-// [중요] 상대 경로 확인 (chat 폴더가 상위에 있으므로 ../chat/...)
 import '../chat/chat_room_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -131,7 +130,48 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
-  // 채팅 시작
+  // 좋아요 & 매칭 처리 (다국어 적용됨)
+  Future<void> _handleInteraction() async {
+    final l10n = AppLocalizations.of(context)!; // [필수]
+    final currentUser = context.read<AuthProvider>().currentUserProfile;
+    if (currentUser == null) return;
+
+    if (currentUser.matches.contains(widget.user.uid)) {
+      _startChat();
+      return;
+    }
+
+    try {
+      final isMatched = await _userService.likeUser(
+        currentUserId: currentUser.uid,
+        targetUserId: widget.user.uid,
+      );
+
+      await context.read<AuthProvider>().loadUserProfile();
+
+      if (!mounted) return;
+
+      if (isMatched) {
+        // [수정] 다국어 메시지 사용
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.matchSuccessMessage)), // "매칭되었습니다!..."
+        );
+        setState(() {});
+      } else {
+        // [수정] 다국어 메시지 사용
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.likeSentMessage)), // "좋아요를 보냈습니다!..."
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${l10n.error}: $e')));
+      }
+    }
+  }
+
   Future<void> _startChat() async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
@@ -157,17 +197,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.error}: $e')),
-        );
-      }
+      // 에러 처리
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final currentUser = context.watch<AuthProvider>().currentUserProfile;
+
+    final bool isMatched =
+        currentUser?.matches.contains(widget.user.uid) ?? false;
+    final bool likesMe =
+        currentUser?.receivedLikes.contains(widget.user.uid) ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -296,24 +338,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              // [수정] Deprecation 해결
               color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: _isBlocked ? null : _startChat,
+        child: ElevatedButton.icon(
+          onPressed: _isBlocked ? null : _handleInteraction,
+          icon: Icon(isMatched ? Icons.chat_bubble : Icons.favorite),
+
+          // [수정] 다국어 변수 사용
+          label: Text(
+            isMatched
+                ? l10n
+                      .startChat // "채팅하기"
+                : (likesMe
+                      ? l10n.acceptLikeAndChat
+                      : l10n.sendLike), // "좋아요 수락..." : "좋아요 보내기"
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+
           style: ElevatedButton.styleFrom(
+            backgroundColor: isMatched
+                ? Colors.green
+                : Theme.of(context).colorScheme.primary,
+            foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          child: Text(
-            l10n.startChat,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ),

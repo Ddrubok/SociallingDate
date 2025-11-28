@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 // [중요] 번역 파일 임포트
 import 'package:flutter_app/l10n/app_localizations.dart';

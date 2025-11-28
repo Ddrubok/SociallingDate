@@ -312,4 +312,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get leave => '나가기';
+
+  @override
+  String get sendLike => '좋아요 보내기';
+
+  @override
+  String get acceptLikeAndChat => '좋아요 수락하고 채팅하기';
+
+  @override
+  String get likeSentMessage => '좋아요를 보냈습니다! 상대방의 응답을 기다려보세요.';
+
+  @override
+  String get matchSuccessMessage => '매칭되었습니다! 채팅을 시작해보세요. 🎉';
 }

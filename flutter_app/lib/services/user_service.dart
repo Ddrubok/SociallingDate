@@ -23,6 +23,21 @@ class UserService {
 
       final snapshot = await query.get();
 
+      // 내 정보 가져오기 (나를 좋아한 사람 목록 확인용)
+      UserModel? currentUser;
+      if (currentUserId != null) {
+        final currentUserDoc = await _firestore
+            .collection('users')
+            .doc(currentUserId)
+            .get();
+        if (currentUserDoc.exists) {
+          currentUser = UserModel.fromFirestore(
+            currentUserDoc.data()!,
+            currentUserId,
+          );
+        }
+      }
+
       List<UserModel> users = snapshot.docs
           .map(
             (doc) => UserModel.fromFirestore(
@@ -30,7 +45,10 @@ class UserService {
               doc.id,
             ),
           )
-          .where((user) => user.uid != currentUserId)
+          .where((user) => user.uid != currentUserId) // 나는 제외
+          .where(
+            (user) => !(currentUser?.matches.contains(user.uid) ?? false),
+          ) // 이미 매칭된 사람 제외 (선택사항)
           .toList();
 
       if (interestFilter != null && interestFilter.isNotEmpty) {
@@ -41,8 +59,71 @@ class UserService {
         }).toList();
       }
 
-      users.sort((a, b) => b.mannerScore.compareTo(a.mannerScore));
+      // [핵심] 정렬 로직 변경
+      // 1순위: 나를 좋아요 한 사람 (receivedLikes에 내 ID가 있는 사람 X -> 내가 그 사람의 receivedLikes에 있는 게 아니라, 그 사람이 내 receivedLikes에 있는 경우)
+      // *수정*: UserModel에는 '내가 받은 좋아요(receivedLikes)'가 저장되어 있음.
+      // 따라서, currentUser.receivedLikes 에 포함된 유저를 맨 위로 올려야 함.
+
+      if (currentUser != null) {
+        users.sort((a, b) {
+          final aLikesMe = currentUser!.receivedLikes.contains(a.uid);
+          final bLikesMe = currentUser.receivedLikes.contains(b.uid);
+
+          if (aLikesMe && !bLikesMe) return -1; // a가 위로
+          if (!aLikesMe && bLikesMe) return 1; // b가 위로
+
+          // 2순위: 매너 점수
+          return b.mannerScore.compareTo(a.mannerScore);
+        });
+      } else {
+        users.sort((a, b) => b.mannerScore.compareTo(a.mannerScore));
+      }
+
       return users;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> likeUser({
+    required String currentUserId,
+    required String targetUserId,
+  }) async {
+    try {
+      final targetRef = _firestore.collection('users').doc(targetUserId);
+      final myRef = _firestore.collection('users').doc(currentUserId);
+
+      return await _firestore.runTransaction((transaction) async {
+        final myDoc = await transaction.get(myRef);
+        // final targetDoc = await transaction.get(targetRef); // 필요 시 사용
+
+        if (!myDoc.exists) throw Exception("내 정보를 찾을 수 없습니다.");
+
+        final myData = UserModel.fromFirestore(myDoc.data()!, currentUserId);
+
+        // 1. 상대방이 이미 나를 좋아했는지 확인 (매칭 성사 여부)
+        if (myData.receivedLikes.contains(targetUserId)) {
+          // [매칭 성공!]
+          // 서로의 matches 목록에 추가하고, receivedLikes에서는 제거(선택)
+          transaction.update(myRef, {
+            'matches': FieldValue.arrayUnion([targetUserId]),
+            'receivedLikes': FieldValue.arrayRemove([targetUserId]), // 목록 정리
+          });
+          transaction.update(targetRef, {
+            'matches': FieldValue.arrayUnion([currentUserId]),
+            // 상대방이 보낸 좋아요는 이미 내 receivedLikes에 있었으니, 상대방 입장에선 변동 없음
+            // (만약 상대방도 '보낸 좋아요'를 관리한다면 거기서 지워야 함)
+          });
+          return true; // 매칭 성사됨 (true 반환)
+        } else {
+          // [짝사랑] 그냥 좋아요만 보냄
+          // 상대방의 receivedLikes에 내 ID 추가
+          transaction.update(targetRef, {
+            'receivedLikes': FieldValue.arrayUnion([currentUserId]),
+          });
+          return false; // 아직 매칭 안 됨 (false 반환)
+        }
+      });
     } catch (e) {
       rethrow;
     }

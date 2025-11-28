@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // 날짜 포맷
 import 'package:flutter_app/l10n/app_localizations.dart'; // 번역
 import '../../services/socialing_service.dart';

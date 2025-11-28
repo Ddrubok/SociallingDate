@@ -243,8 +243,19 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // [추가] 나를 좋아하는지 확인
+    final currentUser = context.read<AuthProvider>().currentUserProfile;
+    final bool likesMe = currentUser?.receivedLikes.contains(user.uid) ?? false;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      // [수정] 파란색 테두리 적용
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: likesMe
+            ? const BorderSide(color: Colors.blue, width: 2) // 나를 좋아하면 파란 테두리
+            : BorderSide.none,
+      ),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -284,11 +295,36 @@ class _UserCard extends StatelessWidget {
                             size: 20,
                             color: Colors.blue[600],
                           ),
+
+                        // [추가] '나를 좋아해요' 뱃지
+                        if (likesMe) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.blue[200]!),
+                            ),
+                            child: const Text(
+                              "Like!",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
+                    // ... 기존 내용 (나이, 지역, 매너온도 등) ...
                     const SizedBox(height: 4),
                     Text(
-                      '${user.age}세 · ${user.location}', // 나이, 지역 등은 데이터 값이라 유지
+                      '${user.age}세 · ${user.location}',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const SizedBox(height: 8),
@@ -303,23 +339,12 @@ class _UserCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            user.interests.take(3).join(' · '),
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: 12,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                        // ...
                       ],
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
             ],
           ),
         ),

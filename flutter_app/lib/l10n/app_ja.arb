@@ -108,6 +108,10 @@
   "joinSuccess": "集まりに参加しました。",
   "leaveChat": "チャットを退出",
   "leaveChatConfirm": "本当に退出しますか？リストから削除されます。",
-  "leave": "退出"
+  "leave": "退出",
+  "sendLike": "いいねを送る",
+  "acceptLikeAndChat": "いいねを受け入れてチャット",
+  "likeSentMessage": "いいねを送りました！相手の反応を待ちましょう。",
+  "matchSuccessMessage": "マッチングしました！チャットを始めましょう。🎉"
 
 }

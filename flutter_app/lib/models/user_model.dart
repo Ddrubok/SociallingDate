@@ -15,11 +15,13 @@ class UserModel {
   final bool isBlocked;
   final List<String> blockedUsers;
   final int reportCount;
-
-  // [추가] 위치 공유 관련 필드
   final double? latitude;
   final double? longitude;
   final bool isSharingLocation;
+
+  // [추가] 매칭 시스템을 위한 필드
+  final List<String> receivedLikes; // 나를 좋아요 한 사람들의 UID 리스트
+  final List<String> matches; // 서로 좋아요(매칭) 된 사람들의 UID 리스트
 
   UserModel({
     required this.uid,
@@ -36,10 +38,12 @@ class UserModel {
     this.isBlocked = false,
     this.blockedUsers = const [],
     this.reportCount = 0,
-    // [추가] 초기화
     this.latitude,
     this.longitude,
     this.isSharingLocation = false,
+    // [추가] 초기화
+    this.receivedLikes = const [],
+    this.matches = const [],
   });
 
   factory UserModel.fromFirestore(Map<String, dynamic> data, String uid) {
@@ -58,10 +62,12 @@ class UserModel {
       isBlocked: data['isBlocked'] as bool? ?? false,
       blockedUsers: List<String>.from(data['blockedUsers'] as List? ?? []),
       reportCount: data['reportCount'] as int? ?? 0,
-      // [추가] Firestore 데이터 매핑
       latitude: (data['latitude'] as num?)?.toDouble(),
       longitude: (data['longitude'] as num?)?.toDouble(),
       isSharingLocation: data['isSharingLocation'] as bool? ?? false,
+      // [추가] Firestore에서 불러오기
+      receivedLikes: List<String>.from(data['receivedLikes'] as List? ?? []),
+      matches: List<String>.from(data['matches'] as List? ?? []),
     );
   }
 
@@ -83,10 +89,12 @@ class UserModel {
       'isBlocked': isBlocked,
       'blockedUsers': blockedUsers,
       'reportCount': reportCount,
-      // [추가] Firestore 저장
       'latitude': latitude,
       'longitude': longitude,
       'isSharingLocation': isSharingLocation,
+      // [추가] Firestore 저장
+      'receivedLikes': receivedLikes,
+      'matches': matches,
     };
   }
 
@@ -108,6 +116,8 @@ class UserModel {
     double? latitude,
     double? longitude,
     bool? isSharingLocation,
+    List<String>? receivedLikes,
+    List<String>? matches,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -127,6 +137,8 @@ class UserModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       isSharingLocation: isSharingLocation ?? this.isSharingLocation,
+      receivedLikes: receivedLikes ?? this.receivedLikes,
+      matches: matches ?? this.matches,
     );
   }
 }

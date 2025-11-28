@@ -315,4 +315,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get leave => 'Leave';
+
+  @override
+  String get sendLike => 'Send Like';
+
+  @override
+  String get acceptLikeAndChat => 'Accept Like & Chat';
+
+  @override
+  String get likeSentMessage => 'Like sent! Wait for their response.';
+
+  @override
+  String get matchSuccessMessage => 'It\'s a Match! Start chatting now. 🎉';
 }

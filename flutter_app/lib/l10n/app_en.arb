@@ -108,5 +108,9 @@
   "joinSuccess": "Joined meetup.",
   "leaveChat": "Leave Chat",
   "leaveChatConfirm": "Are you sure you want to leave? It will be removed from your list.",
-  "leave": "Leave"
+  "leave": "Leave",
+  "sendLike": "Send Like",
+  "acceptLikeAndChat": "Accept Like & Chat",
+  "likeSentMessage": "Like sent! Wait for their response.",
+  "matchSuccessMessage": "It's a Match! Start chatting now. 🎉"
 }

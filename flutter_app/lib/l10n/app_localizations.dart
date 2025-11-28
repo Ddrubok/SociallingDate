@@ -705,6 +705,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'나가기'**
   String get leave;
+
+  /// No description provided for @sendLike.
+  ///
+  /// In ko, this message translates to:
+  /// **'좋아요 보내기'**
+  String get sendLike;
+
+  /// No description provided for @acceptLikeAndChat.
+  ///
+  /// In ko, this message translates to:
+  /// **'좋아요 수락하고 채팅하기'**
+  String get acceptLikeAndChat;
+
+  /// No description provided for @likeSentMessage.
+  ///
+  /// In ko, this message translates to:
+  /// **'좋아요를 보냈습니다! 상대방의 응답을 기다려보세요.'**
+  String get likeSentMessage;
+
+  /// No description provided for @matchSuccessMessage.
+  ///
+  /// In ko, this message translates to:
+  /// **'매칭되었습니다! 채팅을 시작해보세요. 🎉'**
+  String get matchSuccessMessage;
 }
 
 class _AppLocalizationsDelegate

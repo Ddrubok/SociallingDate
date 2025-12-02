@@ -39,6 +39,15 @@ class LocationService {
     return Geolocator.distanceBetween(startLat, startLng, endLat, endLng);
   }
 
+  Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 1000,
+      ),
+    );
+  }
+
   // 3. 외부 지도 앱 열기 (구글 지도)
   Future<void> openMap(double lat, double lng) async {
     // 구글 지도 URL 스키마

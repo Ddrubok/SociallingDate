@@ -11,6 +11,7 @@ import 'providers/auth_provider.dart';
 import 'providers/locale_provider.dart'; // [필수] LocaleProvider 임포트
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'providers/location_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +29,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(
-          create: (_) => LocaleProvider(),
+          create: (_) => LocationProvider(),
         ), // [1] Provider 등록
       ],
       // [2] Consumer로 감싸야 언어가 바뀌었을 때 앱이 새로고침 됩니다!

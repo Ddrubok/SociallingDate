@@ -324,4 +324,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get matchSuccessMessage => 'マッチングしました！チャットを始めましょう。🎉';
+
+  @override
+  String get categoryLabel => 'カテゴリー';
+
+  @override
+  String get maxDistanceLabel => '最大距離';
+
+  @override
+  String get catSmall => '少人数';
+
+  @override
+  String get catLarge => '大人数';
+
+  @override
+  String get catOneDay => '1日限定';
+
+  @override
+  String get catWeekend => '週末';
+
+  @override
+  String get catAll => 'すべて';
 }

@@ -324,4 +324,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get matchSuccessMessage => '매칭되었습니다! 채팅을 시작해보세요. 🎉';
+
+  @override
+  String get categoryLabel => '카테고리';
+
+  @override
+  String get maxDistanceLabel => '최대 거리';
+
+  @override
+  String get catSmall => '소규모 모임';
+
+  @override
+  String get catLarge => '대규모 모임';
+
+  @override
+  String get catOneDay => '당일 모임';
+
+  @override
+  String get catWeekend => '주말 모임';
+
+  @override
+  String get catAll => '전체';
 }

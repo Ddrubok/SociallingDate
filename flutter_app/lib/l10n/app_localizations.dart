@@ -729,6 +729,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'매칭되었습니다! 채팅을 시작해보세요. 🎉'**
   String get matchSuccessMessage;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'카테고리'**
+  String get categoryLabel;
+
+  /// No description provided for @maxDistanceLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 거리'**
+  String get maxDistanceLabel;
+
+  /// No description provided for @catSmall.
+  ///
+  /// In ko, this message translates to:
+  /// **'소규모 모임'**
+  String get catSmall;
+
+  /// No description provided for @catLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'대규모 모임'**
+  String get catLarge;
+
+  /// No description provided for @catOneDay.
+  ///
+  /// In ko, this message translates to:
+  /// **'당일 모임'**
+  String get catOneDay;
+
+  /// No description provided for @catWeekend.
+  ///
+  /// In ko, this message translates to:
+  /// **'주말 모임'**
+  String get catWeekend;
+
+  /// No description provided for @catAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get catAll;
 }
 
 class _AppLocalizationsDelegate

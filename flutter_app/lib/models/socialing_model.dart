@@ -13,7 +13,14 @@ class SocialingModel {
   final List<String> tags; // 태그 (예: #맛집, #독서)
   final String chatRoomId; // 연결된 그룹 채팅방 ID
   final DateTime createdAt;
+  final String category;
 
+  static const List<String> categories = [
+    'small',
+    'large',
+    'oneday',
+    'weekend',
+  ];
   SocialingModel({
     required this.sid,
     required this.hostId,
@@ -27,6 +34,7 @@ class SocialingModel {
     required this.tags,
     required this.chatRoomId,
     required this.createdAt,
+    required this.category,
   });
 
   factory SocialingModel.fromFirestore(Map<String, dynamic> data, String id) {
@@ -43,6 +51,8 @@ class SocialingModel {
       tags: List<String>.from(data['tags'] ?? []),
       chatRoomId: data['chatRoomId'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+
+      category: data['category'] ?? categories.first,
     );
   }
 
@@ -59,6 +69,7 @@ class SocialingModel {
       'tags': tags,
       'chatRoomId': chatRoomId,
       'createdAt': Timestamp.fromDate(createdAt),
+      'category': category,
     };
   }
 }

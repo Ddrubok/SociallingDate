@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/models/socialing_model.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_app/l10n/app_localizations.dart';
@@ -22,6 +23,7 @@ class _SocialingCreateScreenState extends State<SocialingCreateScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
+  String _selectedCategory = SocialingModel.categories.first;
 
   final SocialingService _socialingService = SocialingService();
 
@@ -80,6 +82,7 @@ class _SocialingCreateScreenState extends State<SocialingCreateScreen> {
         dateTime: dateTime,
         maxMembers: int.parse(_maxMembersController.text),
         tags: [], // 태그 기능은 추후 추가
+        category: _selectedCategory,
       );
 
       if (mounted) {
@@ -99,6 +102,21 @@ class _SocialingCreateScreenState extends State<SocialingCreateScreen> {
     }
   }
 
+  String _getCategoryText(String code, AppLocalizations l10n) {
+    switch (code) {
+      case 'small':
+        return l10n.catSmall;
+      case 'large':
+        return l10n.catLarge;
+      case 'oneday':
+        return l10n.catOneDay;
+      case 'weekend':
+        return l10n.catWeekend;
+      default:
+        return code;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -111,6 +129,24 @@ class _SocialingCreateScreenState extends State<SocialingCreateScreen> {
           key: _formKey,
           child: Column(
             children: [
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: l10n.categoryLabel,
+                ), // "카테고리"
+                items: SocialingModel.categories.map((categoryCode) {
+                  return DropdownMenuItem(
+                    value: categoryCode,
+                    child: Text(
+                      _getCategoryText(categoryCode, l10n),
+                    ), // 번역된 텍스트 표시
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) setState(() => _selectedCategory = value);
+                },
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(labelText: l10n.titleHint),

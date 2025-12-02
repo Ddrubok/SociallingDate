@@ -119,5 +119,12 @@
   "sendLike": "좋아요 보내기",
   "acceptLikeAndChat": "좋아요 수락하고 채팅하기",
   "likeSentMessage": "좋아요를 보냈습니다! 상대방의 응답을 기다려보세요.",
-  "matchSuccessMessage": "매칭되었습니다! 채팅을 시작해보세요. 🎉"
+  "matchSuccessMessage": "매칭되었습니다! 채팅을 시작해보세요. 🎉",
+  "categoryLabel": "카테고리",
+  "maxDistanceLabel": "최대 거리",
+  "catSmall": "소규모 모임",
+  "catLarge": "대규모 모임",
+  "catOneDay": "당일 모임",
+  "catWeekend": "주말 모임",
+  "catAll": "전체"
 }

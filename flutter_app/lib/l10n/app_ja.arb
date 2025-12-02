@@ -112,6 +112,13 @@
   "sendLike": "いいねを送る",
   "acceptLikeAndChat": "いいねを受け入れてチャット",
   "likeSentMessage": "いいねを送りました！相手の反応を待ちましょう。",
-  "matchSuccessMessage": "マッチングしました！チャットを始めましょう。🎉"
+  "matchSuccessMessage": "マッチングしました！チャットを始めましょう。🎉",
+  "categoryLabel": "カテゴリー",
+  "maxDistanceLabel": "最大距離",
+  "catSmall": "少人数",
+  "catLarge": "大人数",
+  "catOneDay": "1日限定",
+  "catWeekend": "週末",
+  "catAll": "すべて"
 
 }

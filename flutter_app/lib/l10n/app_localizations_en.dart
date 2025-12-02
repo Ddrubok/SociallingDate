@@ -327,4 +327,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get matchSuccessMessage => 'It\'s a Match! Start chatting now. 🎉';
+
+  @override
+  String get categoryLabel => 'Category';
+
+  @override
+  String get maxDistanceLabel => 'Max Distance';
+
+  @override
+  String get catSmall => 'Small Group';
+
+  @override
+  String get catLarge => 'Large Group';
+
+  @override
+  String get catOneDay => 'One Day';
+
+  @override
+  String get catWeekend => 'Weekend';
+
+  @override
+  String get catAll => 'All';
 }

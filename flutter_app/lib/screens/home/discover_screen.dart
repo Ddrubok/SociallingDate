@@ -119,8 +119,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "최대 거리",
+                        Text(
+                          l10n.maxDistanceLabel,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(

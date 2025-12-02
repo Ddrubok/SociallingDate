@@ -112,5 +112,12 @@
   "sendLike": "Send Like",
   "acceptLikeAndChat": "Accept Like & Chat",
   "likeSentMessage": "Like sent! Wait for their response.",
-  "matchSuccessMessage": "It's a Match! Start chatting now. 🎉"
+  "matchSuccessMessage": "It's a Match! Start chatting now. 🎉",
+  "categoryLabel": "Category",
+  "maxDistanceLabel": "Max Distance",
+  "catSmall": "Small Group",
+  "catLarge": "Large Group",
+  "catOneDay": "One Day",
+  "catWeekend": "Weekend",
+  "catAll": "All"
 }

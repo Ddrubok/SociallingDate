@@ -126,5 +126,22 @@
   "catLarge": "대규모 모임",
   "catOneDay": "당일 모임",
   "catWeekend": "주말 모임",
-  "catAll": "전체"
+  "catAll": "전체",
+  "dailyRecommend": "오늘의 추천",
+  "customRecommend": "맞춤 추천",
+  "tabNearby": "주변",
+  "tabInterest": "취미",
+  "tabReligion": "종교",
+  "tabLifestyle": "라이프",
+  "applyJoin": "참여 신청",
+  "cancelApply": "신청 취소",
+  "waitingApproval": "승인 대기 중",
+  "manageMembers": "참여자 관리",
+  "applicantsList": "신청자 목록",
+  "approve": "승인",
+  "reject": "거절",
+  "noApplicants": "아직 신청자가 없습니다.",
+  "applySent": "참여 신청을 보냈습니다.",
+  "approveSuccess": "멤버를 승인했습니다.",
+  "rejectSuccess": "신청을 거절했습니다."
 }

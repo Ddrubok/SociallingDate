@@ -348,4 +348,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get catAll => 'All';
+
+  @override
+  String get dailyRecommend => 'Today\'s Recommendation';
+
+  @override
+  String get customRecommend => 'Custom Recommendation';
+
+  @override
+  String get tabNearby => 'Around';
+
+  @override
+  String get tabInterest => 'Hobby';
+
+  @override
+  String get tabReligion => 'Religion';
+
+  @override
+  String get tabLifestyle => 'Life';
+
+  @override
+  String get applyJoin => 'Request to Join';
+
+  @override
+  String get cancelApply => 'Cancel Request';
+
+  @override
+  String get waitingApproval => 'Pending Approval';
+
+  @override
+  String get manageMembers => 'Manage Members';
+
+  @override
+  String get applicantsList => 'Applicants';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get noApplicants => 'No applicants yet.';
+
+  @override
+  String get applySent => 'Request sent.';
+
+  @override
+  String get approveSuccess => 'Member approved.';
+
+  @override
+  String get rejectSuccess => 'Request rejected.';
 }

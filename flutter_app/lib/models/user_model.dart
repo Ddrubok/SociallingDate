@@ -15,13 +15,21 @@ class UserModel {
   final bool isBlocked;
   final List<String> blockedUsers;
   final int reportCount;
+
+  // 위치 및 매칭 관련 필드 (기존)
   final double? latitude;
   final double? longitude;
   final bool isSharingLocation;
+  final List<String> receivedLikes;
+  final List<String> matches;
 
-  // [추가] 매칭 시스템을 위한 필드
-  final List<String> receivedLikes; // 나를 좋아요 한 사람들의 UID 리스트
-  final List<String> matches; // 서로 좋아요(매칭) 된 사람들의 UID 리스트
+  // [v2.0 추가] 상세 프로필 및 친구 요청 시스템
+  final String religion; // 종교 (예: 기독교, 무교)
+  final List<String> lifestyle; // 라이프스타일 (예: 아침형, 비흡연)
+
+  // 친구 요청 상태 관리 (Map 구조: {targetUserId, status, timestamp})
+  final List<Map<String, dynamic>> friendRequestsSent;
+  final List<Map<String, dynamic>> friendRequestsReceived;
 
   UserModel({
     required this.uid,
@@ -41,9 +49,13 @@ class UserModel {
     this.latitude,
     this.longitude,
     this.isSharingLocation = false,
-    // [추가] 초기화
     this.receivedLikes = const [],
     this.matches = const [],
+    // [추가] 초기화 (기본값 설정)
+    this.religion = '',
+    this.lifestyle = const [],
+    this.friendRequestsSent = const [],
+    this.friendRequestsReceived = const [],
   });
 
   factory UserModel.fromFirestore(Map<String, dynamic> data, String uid) {
@@ -65,9 +77,17 @@ class UserModel {
       latitude: (data['latitude'] as num?)?.toDouble(),
       longitude: (data['longitude'] as num?)?.toDouble(),
       isSharingLocation: data['isSharingLocation'] as bool? ?? false,
-      // [추가] Firestore에서 불러오기
       receivedLikes: List<String>.from(data['receivedLikes'] as List? ?? []),
       matches: List<String>.from(data['matches'] as List? ?? []),
+      // [추가] Firestore 데이터 매핑
+      religion: data['religion'] as String? ?? '',
+      lifestyle: List<String>.from(data['lifestyle'] as List? ?? []),
+      friendRequestsSent: List<Map<String, dynamic>>.from(
+        data['friendRequestsSent'] as List? ?? [],
+      ),
+      friendRequestsReceived: List<Map<String, dynamic>>.from(
+        data['friendRequestsReceived'] as List? ?? [],
+      ),
     );
   }
 
@@ -92,9 +112,13 @@ class UserModel {
       'latitude': latitude,
       'longitude': longitude,
       'isSharingLocation': isSharingLocation,
-      // [추가] Firestore 저장
       'receivedLikes': receivedLikes,
       'matches': matches,
+      // [추가] Firestore 저장
+      'religion': religion,
+      'lifestyle': lifestyle,
+      'friendRequestsSent': friendRequestsSent,
+      'friendRequestsReceived': friendRequestsReceived,
     };
   }
 
@@ -118,6 +142,11 @@ class UserModel {
     bool? isSharingLocation,
     List<String>? receivedLikes,
     List<String>? matches,
+    // [추가]
+    String? religion,
+    List<String>? lifestyle,
+    List<Map<String, dynamic>>? friendRequestsSent,
+    List<Map<String, dynamic>>? friendRequestsReceived,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -139,6 +168,11 @@ class UserModel {
       isSharingLocation: isSharingLocation ?? this.isSharingLocation,
       receivedLikes: receivedLikes ?? this.receivedLikes,
       matches: matches ?? this.matches,
+      religion: religion ?? this.religion,
+      lifestyle: lifestyle ?? this.lifestyle,
+      friendRequestsSent: friendRequestsSent ?? this.friendRequestsSent,
+      friendRequestsReceived:
+          friendRequestsReceived ?? this.friendRequestsReceived,
     );
   }
 }

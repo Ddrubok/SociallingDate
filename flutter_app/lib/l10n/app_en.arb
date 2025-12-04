@@ -119,5 +119,22 @@
   "catLarge": "Large Group",
   "catOneDay": "One Day",
   "catWeekend": "Weekend",
-  "catAll": "All"
+  "catAll": "All",
+  "dailyRecommend": "Today's Recommendation",
+  "customRecommend": "Custom Recommendation",
+  "tabNearby": "Around",
+  "tabInterest": "Hobby",
+  "tabReligion": "Religion",
+  "tabLifestyle": "Life",
+  "applyJoin": "Request to Join",
+  "cancelApply": "Cancel Request",
+  "waitingApproval": "Pending Approval",
+  "manageMembers": "Manage Members",
+  "applicantsList": "Applicants",
+  "approve": "Approve",
+  "reject": "Reject",
+  "noApplicants": "No applicants yet.",
+  "applySent": "Request sent.",
+  "approveSuccess": "Member approved.",
+  "rejectSuccess": "Request rejected."
 }

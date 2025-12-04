@@ -345,4 +345,55 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get catAll => 'すべて';
+
+  @override
+  String get dailyRecommend => '本日推奨';
+
+  @override
+  String get customRecommend => 'カスタム推奨事項';
+
+  @override
+  String get tabNearby => '周辺';
+
+  @override
+  String get tabInterest => '趣味';
+
+  @override
+  String get tabReligion => '宗教';
+
+  @override
+  String get tabLifestyle => '生活';
+
+  @override
+  String get applyJoin => '参加申請';
+
+  @override
+  String get cancelApply => '申請キャンセル';
+
+  @override
+  String get waitingApproval => '承認待ち';
+
+  @override
+  String get manageMembers => '参加者管理';
+
+  @override
+  String get applicantsList => '申請者リスト';
+
+  @override
+  String get approve => '承認';
+
+  @override
+  String get reject => '拒否';
+
+  @override
+  String get noApplicants => '申請者がまだいません。';
+
+  @override
+  String get applySent => '参加申請を送りました。';
+
+  @override
+  String get approveSuccess => 'メンバーを承認しました。';
+
+  @override
+  String get rejectSuccess => '申請を拒否しました。';
 }

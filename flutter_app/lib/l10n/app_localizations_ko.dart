@@ -345,4 +345,55 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get catAll => '전체';
+
+  @override
+  String get dailyRecommend => '오늘의 추천';
+
+  @override
+  String get customRecommend => '맞춤 추천';
+
+  @override
+  String get tabNearby => '주변';
+
+  @override
+  String get tabInterest => '취미';
+
+  @override
+  String get tabReligion => '종교';
+
+  @override
+  String get tabLifestyle => '라이프';
+
+  @override
+  String get applyJoin => '참여 신청';
+
+  @override
+  String get cancelApply => '신청 취소';
+
+  @override
+  String get waitingApproval => '승인 대기 중';
+
+  @override
+  String get manageMembers => '참여자 관리';
+
+  @override
+  String get applicantsList => '신청자 목록';
+
+  @override
+  String get approve => '승인';
+
+  @override
+  String get reject => '거절';
+
+  @override
+  String get noApplicants => '아직 신청자가 없습니다.';
+
+  @override
+  String get applySent => '참여 신청을 보냈습니다.';
+
+  @override
+  String get approveSuccess => '멤버를 승인했습니다.';
+
+  @override
+  String get rejectSuccess => '신청을 거절했습니다.';
 }

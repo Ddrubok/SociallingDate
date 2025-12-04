@@ -119,6 +119,23 @@
   "catLarge": "大人数",
   "catOneDay": "1日限定",
   "catWeekend": "週末",
-  "catAll": "すべて"
+  "catAll": "すべて",
+  "dailyRecommend": "本日推奨",
+  "customRecommend": "カスタム推奨事項",
+  "tabNearby": "周辺",
+  "tabInterest": "趣味",
+  "tabReligion": "宗教",
+  "tabLifestyle": "生活",
+  "applyJoin": "参加申請",
+  "cancelApply": "申請キャンセル",
+  "waitingApproval": "承認待ち",
+  "manageMembers": "参加者管理",
+  "applicantsList": "申請者リスト",
+  "approve": "承認",
+  "reject": "拒否",
+  "noApplicants": "申請者がまだいません。",
+  "applySent": "参加申請を送りました。",
+  "approveSuccess": "メンバーを承認しました。",
+  "rejectSuccess": "申請を拒否しました。"
 
 }

@@ -771,6 +771,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'전체'**
   String get catAll;
+
+  /// No description provided for @dailyRecommend.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘의 추천'**
+  String get dailyRecommend;
+
+  /// No description provided for @customRecommend.
+  ///
+  /// In ko, this message translates to:
+  /// **'맞춤 추천'**
+  String get customRecommend;
+
+  /// No description provided for @tabNearby.
+  ///
+  /// In ko, this message translates to:
+  /// **'주변'**
+  String get tabNearby;
+
+  /// No description provided for @tabInterest.
+  ///
+  /// In ko, this message translates to:
+  /// **'취미'**
+  String get tabInterest;
+
+  /// No description provided for @tabReligion.
+  ///
+  /// In ko, this message translates to:
+  /// **'종교'**
+  String get tabReligion;
+
+  /// No description provided for @tabLifestyle.
+  ///
+  /// In ko, this message translates to:
+  /// **'라이프'**
+  String get tabLifestyle;
+
+  /// No description provided for @applyJoin.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여 신청'**
+  String get applyJoin;
+
+  /// No description provided for @cancelApply.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청 취소'**
+  String get cancelApply;
+
+  /// No description provided for @waitingApproval.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 대기 중'**
+  String get waitingApproval;
+
+  /// No description provided for @manageMembers.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여자 관리'**
+  String get manageMembers;
+
+  /// No description provided for @applicantsList.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청자 목록'**
+  String get applicantsList;
+
+  /// No description provided for @approve.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In ko, this message translates to:
+  /// **'거절'**
+  String get reject;
+
+  /// No description provided for @noApplicants.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 신청자가 없습니다.'**
+  String get noApplicants;
+
+  /// No description provided for @applySent.
+  ///
+  /// In ko, this message translates to:
+  /// **'참여 신청을 보냈습니다.'**
+  String get applySent;
+
+  /// No description provided for @approveSuccess.
+  ///
+  /// In ko, this message translates to:
+  /// **'멤버를 승인했습니다.'**
+  String get approveSuccess;
+
+  /// No description provided for @rejectSuccess.
+  ///
+  /// In ko, this message translates to:
+  /// **'신청을 거절했습니다.'**
+  String get rejectSuccess;
 }
 
 class _AppLocalizationsDelegate

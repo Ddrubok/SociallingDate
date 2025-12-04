@@ -1,19 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SocialingModel {
-  final String sid; // 소셜링 ID
-  final String hostId; // 주최자 ID
-  final String title; // 모임 제목
-  final String content; // 모임 내용
-  final String imageUrl; // 커버 이미지
-  final String location; // 장소
-  final DateTime dateTime; // 일시
-  final int maxMembers; // 최대 인원
-  final List<String> members; // 참여자 ID 리스트
-  final List<String> tags; // 태그 (예: #맛집, #독서)
-  final String chatRoomId; // 연결된 그룹 채팅방 ID
+  final String sid;
+  final String hostId;
+  final String title;
+  final String content;
+  final String imageUrl;
+  final String location;
+  final DateTime dateTime;
+  final int maxMembers;
+  final List<String> members;
+  final List<String> tags;
+  final String chatRoomId;
   final DateTime createdAt;
   final String category;
+
+  // [v2.0 추가] 승인제 및 규칙 관련 필드
+  final List<String> applicants; // 참여 신청 대기자 UID 목록
+  final String genderRule; // 성별 규칙 ('any', 'male_only', 'female_only')
+  final bool isApprovalRequired; // 승인제 여부 (true: 승인 필요, false: 선착순)
 
   static const List<String> categories = [
     'small',
@@ -21,6 +26,7 @@ class SocialingModel {
     'oneday',
     'weekend',
   ];
+
   SocialingModel({
     required this.sid,
     required this.hostId,
@@ -35,6 +41,10 @@ class SocialingModel {
     required this.chatRoomId,
     required this.createdAt,
     required this.category,
+    // [추가] 초기화
+    this.applicants = const [],
+    this.genderRule = 'any',
+    this.isApprovalRequired = false,
   });
 
   factory SocialingModel.fromFirestore(Map<String, dynamic> data, String id) {
@@ -51,8 +61,11 @@ class SocialingModel {
       tags: List<String>.from(data['tags'] ?? []),
       chatRoomId: data['chatRoomId'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-
       category: data['category'] ?? categories.first,
+      // [추가] Firestore 데이터 매핑
+      applicants: List<String>.from(data['applicants'] ?? []),
+      genderRule: data['genderRule'] ?? 'any',
+      isApprovalRequired: data['isApprovalRequired'] ?? false,
     );
   }
 
@@ -70,6 +83,10 @@ class SocialingModel {
       'chatRoomId': chatRoomId,
       'createdAt': Timestamp.fromDate(createdAt),
       'category': category,
+      // [추가] Firestore 저장
+      'applicants': applicants,
+      'genderRule': genderRule,
+      'isApprovalRequired': isApprovalRequired,
     };
   }
 }

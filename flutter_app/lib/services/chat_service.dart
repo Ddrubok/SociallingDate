@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/chat_room_model.dart';
-import '../models/user_model.dart'; // MessageModel 필요 시 import
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

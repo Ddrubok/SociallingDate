@@ -249,4 +249,155 @@ class UserService {
       }
     });
   }
+
+  // [1] 친구 요청 보내기
+  Future<void> sendFriendRequest(
+    String currentUserId,
+    String targetUserId,
+  ) async {
+    try {
+      final myRef = _firestore.collection('users').doc(currentUserId);
+      final targetRef = _firestore.collection('users').doc(targetUserId);
+
+      await _firestore.runTransaction((transaction) async {
+        // 내 보낸 요청 목록에 추가
+        transaction.update(myRef, {
+          'friendRequestsSent': FieldValue.arrayUnion([
+            {
+              'targetUserId': targetUserId,
+              'status': 'pending',
+              'timestamp': DateTime.now().toIso8601String(),
+            },
+          ]),
+        });
+
+        // 상대 받은 요청 목록에 추가
+        transaction.update(targetRef, {
+          'friendRequestsReceived': FieldValue.arrayUnion([
+            {
+              'senderId': currentUserId,
+              'status': 'pending',
+              'isViewed': false,
+              'timestamp': DateTime.now().toIso8601String(),
+            },
+          ]),
+        });
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // [2] 친구 요청 취소
+  Future<void> cancelFriendRequest(
+    String currentUserId,
+    String targetUserId,
+  ) async {
+    try {
+      final myRef = _firestore.collection('users').doc(currentUserId);
+      final targetRef = _firestore.collection('users').doc(targetUserId);
+
+      // *주의*: 배열 내 객체 삭제는 정확히 일치해야 하므로,
+      // 실무에서는 보통 별도 서브컬렉션을 쓰거나, 가져와서 필터링 후 업데이트하는 방식을 씁니다.
+      // 여기서는 MVP를 위해 '읽어서 -> 지우고 -> 다시 저장'하는 방식으로 구현합니다.
+
+      await _firestore.runTransaction((transaction) async {
+        final myDoc = await transaction.get(myRef);
+        final targetDoc = await transaction.get(targetRef);
+
+        if (!myDoc.exists || !targetDoc.exists) return;
+
+        // 내 목록에서 제거
+        final mySent = List<Map<String, dynamic>>.from(
+          myDoc.data()!['friendRequestsSent'] ?? [],
+        );
+        mySent.removeWhere((req) => req['targetUserId'] == targetUserId);
+        transaction.update(myRef, {'friendRequestsSent': mySent});
+
+        // 상대 목록에서 제거
+        final targetReceived = List<Map<String, dynamic>>.from(
+          targetDoc.data()!['friendRequestsReceived'] ?? [],
+        );
+        targetReceived.removeWhere((req) => req['senderId'] == currentUserId);
+        transaction.update(targetRef, {
+          'friendRequestsReceived': targetReceived,
+        });
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // [3] 친구 요청 수락 (매칭 성사!)
+  Future<void> acceptFriendRequest(
+    String currentUserId,
+    String senderId,
+  ) async {
+    try {
+      final myRef = _firestore.collection('users').doc(currentUserId);
+      final senderRef = _firestore.collection('users').doc(senderId);
+
+      await _firestore.runTransaction((transaction) async {
+        // 1. 서로 'matches' (친구) 목록에 추가
+        transaction.update(myRef, {
+          'matches': FieldValue.arrayUnion([senderId]),
+        });
+        transaction.update(senderRef, {
+          'matches': FieldValue.arrayUnion([currentUserId]),
+        });
+
+        // 2. 요청 목록 정리 (받은 요청 삭제 / 보낸 요청 상태 변경)
+        // (간단히 목록에서 제거하는 것으로 처리)
+        final myDoc = await transaction.get(myRef);
+        final senderDoc = await transaction.get(senderRef);
+
+        final myReceived = List<Map<String, dynamic>>.from(
+          myDoc.data()!['friendRequestsReceived'] ?? [],
+        );
+        myReceived.removeWhere((req) => req['senderId'] == senderId);
+        transaction.update(myRef, {'friendRequestsReceived': myReceived});
+
+        final senderSent = List<Map<String, dynamic>>.from(
+          senderDoc.data()!['friendRequestsSent'] ?? [],
+        );
+        // 상태를 'accepted'로 바꾸거나 제거 (여기선 제거)
+        senderSent.removeWhere((req) => req['targetUserId'] == currentUserId);
+        transaction.update(senderRef, {'friendRequestsSent': senderSent});
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // [4] 친구 요청 거절
+  Future<void> rejectFriendRequest(
+    String currentUserId,
+    String senderId,
+  ) async {
+    try {
+      final myRef = _firestore.collection('users').doc(currentUserId);
+      final senderRef = _firestore.collection('users').doc(senderId);
+
+      await _firestore.runTransaction((transaction) async {
+        final myDoc = await transaction.get(myRef);
+        final senderDoc = await transaction.get(senderRef);
+
+        // 내 받은 목록에서 제거
+        final myReceived = List<Map<String, dynamic>>.from(
+          myDoc.data()!['friendRequestsReceived'] ?? [],
+        );
+        myReceived.removeWhere((req) => req['senderId'] == senderId);
+        transaction.update(myRef, {'friendRequestsReceived': myReceived});
+
+        // 상대 보낸 목록에서 제거 (또는 rejected 상태로 변경)
+        final senderSent = List<Map<String, dynamic>>.from(
+          senderDoc.data()!['friendRequestsSent'] ?? [],
+        );
+        senderSent.removeWhere((req) => req['targetUserId'] == currentUserId);
+        transaction.update(senderRef, {'friendRequestsSent': senderSent});
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

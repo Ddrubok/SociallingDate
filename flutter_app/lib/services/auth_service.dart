@@ -55,7 +55,10 @@ class AuthService {
   // Firestore에 사용자 프로필 생성
   Future<void> createUserProfile(UserModel user) async {
     try {
-      await _firestore.collection('users').doc(user.uid).set(user.toFirestore());
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(user.toFirestore());
     } catch (e) {
       rethrow;
     }
@@ -85,9 +88,9 @@ class AuthService {
 
   // 사용자 프로필 스트림
   Stream<UserModel?> getUserProfileStream(String uid) {
-    return _firestore.collection('users').doc(uid).snapshots().map((doc) {
-      if (doc.exists && doc.data() != null) {
-        return UserModel.fromFirestore(doc.data()!, doc.id);
+    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
+      if (snapshot.exists && snapshot.data() != null) {
+        return UserModel.fromFirestore(snapshot.data()!, snapshot.id);
       }
       return null;
     });

@@ -399,4 +399,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejectSuccess => 'Request rejected.';
+
+  @override
+  String get friendRequestSent => 'Friend request sent.';
+
+  @override
+  String get friendRequestReceived => 'Wants to be friends!';
+
+  @override
+  String get sendFriendRequest => 'Send Friend Request';
+
+  @override
+  String get cancelFriendRequest => 'Cancel Request';
+
+  @override
+  String get acceptFriendRequest => 'Accept';
+
+  @override
+  String get rejectFriendRequest => 'Reject';
+
+  @override
+  String get requestPending => 'Request Pending';
+
+  @override
+  String get requestAccepted => 'Request accepted. Start chatting!';
+
+  @override
+  String get requestRejected => 'Request rejected.';
+
+  @override
+  String get noFriendRequests => 'No requests received.';
+
+  @override
+  String get noBio => 'No bio yet.';
+
+  @override
+  String get noInterests => 'No interests added.';
+
+  @override
+  String get userBlocked => 'User blocked.';
+
+  @override
+  String get userUnblocked => 'User unblocked.';
+
+  @override
+  String get reportUser => 'Report User';
+
+  @override
+  String get reportReasonHint => 'Please enter the reason.';
+
+  @override
+  String get reportSubmitted => 'Report submitted.';
 }

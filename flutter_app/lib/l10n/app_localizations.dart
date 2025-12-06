@@ -873,6 +873,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'신청을 거절했습니다.'**
   String get rejectSuccess;
+
+  /// No description provided for @friendRequestSent.
+  ///
+  /// In ko, this message translates to:
+  /// **'친구 요청을 보냈습니다.'**
+  String get friendRequestSent;
+
+  /// No description provided for @friendRequestReceived.
+  ///
+  /// In ko, this message translates to:
+  /// **'친구가 되고 싶어 해요!'**
+  String get friendRequestReceived;
+
+  /// No description provided for @sendFriendRequest.
+  ///
+  /// In ko, this message translates to:
+  /// **'친구 요청 보내기'**
+  String get sendFriendRequest;
+
+  /// No description provided for @cancelFriendRequest.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청 취소'**
+  String get cancelFriendRequest;
+
+  /// No description provided for @acceptFriendRequest.
+  ///
+  /// In ko, this message translates to:
+  /// **'수락'**
+  String get acceptFriendRequest;
+
+  /// No description provided for @rejectFriendRequest.
+  ///
+  /// In ko, this message translates to:
+  /// **'거절'**
+  String get rejectFriendRequest;
+
+  /// No description provided for @requestPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청 대기 중'**
+  String get requestPending;
+
+  /// No description provided for @requestAccepted.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청이 수락되었습니다. 대화를 시작하세요!'**
+  String get requestAccepted;
+
+  /// No description provided for @requestRejected.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청이 거절되었습니다.'**
+  String get requestRejected;
+
+  /// No description provided for @noFriendRequests.
+  ///
+  /// In ko, this message translates to:
+  /// **'받은 요청이 없습니다.'**
+  String get noFriendRequests;
+
+  /// No description provided for @noBio.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 자기소개가 없습니다.'**
+  String get noBio;
+
+  /// No description provided for @noInterests.
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 관심사가 없습니다.'**
+  String get noInterests;
+
+  /// No description provided for @userBlocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용자가 차단되었습니다.'**
+  String get userBlocked;
+
+  /// No description provided for @userUnblocked.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단이 해제되었습니다.'**
+  String get userUnblocked;
+
+  /// No description provided for @reportUser.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용자 신고'**
+  String get reportUser;
+
+  /// No description provided for @reportReasonHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고 사유를 입력해주세요.'**
+  String get reportReasonHint;
+
+  /// No description provided for @reportSubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고가 접수되었습니다.'**
+  String get reportSubmitted;
 }
 
 class _AppLocalizationsDelegate

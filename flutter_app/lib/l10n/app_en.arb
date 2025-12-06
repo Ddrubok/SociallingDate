@@ -136,5 +136,23 @@
   "noApplicants": "No applicants yet.",
   "applySent": "Request sent.",
   "approveSuccess": "Member approved.",
-  "rejectSuccess": "Request rejected."
+  "rejectSuccess": "Request rejected.",
+  "friendRequestSent": "Friend request sent.",
+  "friendRequestReceived": "Wants to be friends!",
+  "sendFriendRequest": "Send Friend Request",
+  "cancelFriendRequest": "Cancel Request",
+  "acceptFriendRequest": "Accept",
+  "rejectFriendRequest": "Reject",
+  "requestPending": "Request Pending",
+  "requestAccepted": "Request accepted. Start chatting!",
+  "requestRejected": "Request rejected.",
+  "noFriendRequests": "No requests received.",
+  "noBio": "No bio yet.",
+  "noInterests": "No interests added.",
+  "userBlocked": "User blocked.",
+  "userUnblocked": "User unblocked.",
+  "reportUser": "Report User",
+  "reportReasonHint": "Please enter the reason.",
+  "reportSubmitted": "Report submitted."
+  
 }

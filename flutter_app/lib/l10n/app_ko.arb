@@ -143,5 +143,22 @@
   "noApplicants": "아직 신청자가 없습니다.",
   "applySent": "참여 신청을 보냈습니다.",
   "approveSuccess": "멤버를 승인했습니다.",
-  "rejectSuccess": "신청을 거절했습니다."
+  "rejectSuccess": "신청을 거절했습니다.",
+  "friendRequestSent": "친구 요청을 보냈습니다.",
+  "friendRequestReceived": "친구가 되고 싶어 해요!",
+  "sendFriendRequest": "친구 요청 보내기",
+  "cancelFriendRequest": "요청 취소",
+  "acceptFriendRequest": "수락",
+  "rejectFriendRequest": "거절",
+  "requestPending": "요청 대기 중",
+  "requestAccepted": "요청이 수락되었습니다. 대화를 시작하세요!",
+  "requestRejected": "요청이 거절되었습니다.",
+  "noFriendRequests": "받은 요청이 없습니다.",
+  "noBio": "아직 자기소개가 없습니다.",
+  "noInterests": "등록된 관심사가 없습니다.",
+  "userBlocked": "사용자가 차단되었습니다.",
+  "userUnblocked": "차단이 해제되었습니다.",
+  "reportUser": "사용자 신고",
+  "reportReasonHint": "신고 사유를 입력해주세요.",
+  "reportSubmitted": "신고가 접수되었습니다."
 }

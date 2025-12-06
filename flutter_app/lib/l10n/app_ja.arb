@@ -136,6 +136,23 @@
   "noApplicants": "申請者がまだいません。",
   "applySent": "参加申請を送りました。",
   "approveSuccess": "メンバーを承認しました。",
-  "rejectSuccess": "申請を拒否しました。"
+  "rejectSuccess": "申請を拒否しました。",
+  "friendRequestSent": "友達申請を送りました。",
+  "friendRequestReceived": "友達になりたいそうです！",
+  "sendFriendRequest": "友達申請を送る",
+  "cancelFriendRequest": "申請キャンセル",
+  "acceptFriendRequest": "承認",
+  "rejectFriendRequest": "拒否",
+  "requestPending": "申請中",
+  "requestAccepted": "申請が承認されました。チャットを始めましょう！",
+  "requestRejected": "申請が拒否されました。",
+  "noFriendRequests": "届いた申請はありません。",
+  "noBio": "まだ自己紹介がありません。",
+  "noInterests": "登録された関心事がありません。",
+  "userBlocked": "ユーザーをブロックしました。",
+  "userUnblocked": "ブロックを解除しました。",
+  "reportUser": "ユーザーを通報",
+  "reportReasonHint": "通報理由を入力してください。",
+  "reportSubmitted": "通報を受け付けました。"
 
 }

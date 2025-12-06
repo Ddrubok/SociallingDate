@@ -396,4 +396,55 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get rejectSuccess => '申請を拒否しました。';
+
+  @override
+  String get friendRequestSent => '友達申請を送りました。';
+
+  @override
+  String get friendRequestReceived => '友達になりたいそうです！';
+
+  @override
+  String get sendFriendRequest => '友達申請を送る';
+
+  @override
+  String get cancelFriendRequest => '申請キャンセル';
+
+  @override
+  String get acceptFriendRequest => '承認';
+
+  @override
+  String get rejectFriendRequest => '拒否';
+
+  @override
+  String get requestPending => '申請中';
+
+  @override
+  String get requestAccepted => '申請が承認されました。チャットを始めましょう！';
+
+  @override
+  String get requestRejected => '申請が拒否されました。';
+
+  @override
+  String get noFriendRequests => '届いた申請はありません。';
+
+  @override
+  String get noBio => 'まだ自己紹介がありません。';
+
+  @override
+  String get noInterests => '登録された関心事がありません。';
+
+  @override
+  String get userBlocked => 'ユーザーをブロックしました。';
+
+  @override
+  String get userUnblocked => 'ブロックを解除しました。';
+
+  @override
+  String get reportUser => 'ユーザーを通報';
+
+  @override
+  String get reportReasonHint => '通報理由を入力してください。';
+
+  @override
+  String get reportSubmitted => '通報を受け付けました。';
 }

@@ -396,4 +396,55 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get rejectSuccess => '신청을 거절했습니다.';
+
+  @override
+  String get friendRequestSent => '친구 요청을 보냈습니다.';
+
+  @override
+  String get friendRequestReceived => '친구가 되고 싶어 해요!';
+
+  @override
+  String get sendFriendRequest => '친구 요청 보내기';
+
+  @override
+  String get cancelFriendRequest => '요청 취소';
+
+  @override
+  String get acceptFriendRequest => '수락';
+
+  @override
+  String get rejectFriendRequest => '거절';
+
+  @override
+  String get requestPending => '요청 대기 중';
+
+  @override
+  String get requestAccepted => '요청이 수락되었습니다. 대화를 시작하세요!';
+
+  @override
+  String get requestRejected => '요청이 거절되었습니다.';
+
+  @override
+  String get noFriendRequests => '받은 요청이 없습니다.';
+
+  @override
+  String get noBio => '아직 자기소개가 없습니다.';
+
+  @override
+  String get noInterests => '등록된 관심사가 없습니다.';
+
+  @override
+  String get userBlocked => '사용자가 차단되었습니다.';
+
+  @override
+  String get userUnblocked => '차단이 해제되었습니다.';
+
+  @override
+  String get reportUser => '사용자 신고';
+
+  @override
+  String get reportReasonHint => '신고 사유를 입력해주세요.';
+
+  @override
+  String get reportSubmitted => '신고가 접수되었습니다.';
 }

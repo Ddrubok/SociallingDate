@@ -447,4 +447,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reportSubmitted => '신고가 접수되었습니다.';
+
+  @override
+  String get newMatches => '새로운 매칭';
+
+  @override
+  String get noMatchesYet => '아직 매칭된 친구가 없습니다.';
 }

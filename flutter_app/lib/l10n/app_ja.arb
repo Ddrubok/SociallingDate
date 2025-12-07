@@ -153,6 +153,8 @@
   "userUnblocked": "ブロックを解除しました。",
   "reportUser": "ユーザーを通報",
   "reportReasonHint": "通報理由を入力してください。",
-  "reportSubmitted": "通報を受け付けました。"
+  "reportSubmitted": "通報を受け付けました。",
+  "newMatches": "新しいマッチ",
+  "noMatchesYet": "まだマッチした友達がいません。"
 
 }

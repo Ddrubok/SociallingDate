@@ -447,4 +447,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reportSubmitted => '通報を受け付けました。';
+
+  @override
+  String get newMatches => '新しいマッチ';
+
+  @override
+  String get noMatchesYet => 'まだマッチした友達がいません。';
 }

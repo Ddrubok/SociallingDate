@@ -153,6 +153,8 @@
   "userUnblocked": "User unblocked.",
   "reportUser": "Report User",
   "reportReasonHint": "Please enter the reason.",
-  "reportSubmitted": "Report submitted."
+  "reportSubmitted": "Report submitted.",
+  "newMatches": "New Matches",
+  "noMatchesYet": "No matches yet."
   
 }

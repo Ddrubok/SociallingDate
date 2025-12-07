@@ -450,4 +450,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportSubmitted => 'Report submitted.';
+
+  @override
+  String get newMatches => 'New Matches';
+
+  @override
+  String get noMatchesYet => 'No matches yet.';
 }

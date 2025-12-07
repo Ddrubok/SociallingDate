@@ -250,6 +250,40 @@ class UserService {
     });
   }
 
+  // [추가] 나와 매칭된(친구인) 유저들의 정보 가져오기
+  Future<List<UserModel>> getMatchedUsers(String currentUserId) async {
+    try {
+      // 1. 내 정보 가져오기 (matches 배열 확인)
+      final myDoc = await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .get();
+      if (!myDoc.exists) return [];
+
+      final List<String> matchIds = List<String>.from(
+        myDoc.data()?['matches'] ?? [],
+      );
+
+      if (matchIds.isEmpty) return [];
+
+      // 2. 친구들의 정보 가져오기 (whereIn은 최대 10개 제한이 있으므로, 반복문이나 chunks 사용 권장)
+      // MVP 단계에서는 간단하게 Future.wait로 구현
+      List<UserModel> friends = [];
+
+      // 10개씩 끊어서 조회하거나, 아래처럼 개별 조회 (사용자 수 적을 땐 이게 안전)
+      final futures = matchIds.map((uid) => getUser(uid));
+      final results = await Future.wait(futures);
+
+      for (var user in results) {
+        if (user != null) friends.add(user);
+      }
+
+      return friends;
+    } catch (e) {
+      return [];
+    }
+  }
+
   // [1] 친구 요청 보내기
   Future<void> sendFriendRequest(
     String currentUserId,

@@ -160,5 +160,7 @@
   "userUnblocked": "차단이 해제되었습니다.",
   "reportUser": "사용자 신고",
   "reportReasonHint": "신고 사유를 입력해주세요.",
-  "reportSubmitted": "신고가 접수되었습니다."
+  "reportSubmitted": "신고가 접수되었습니다.",
+  "newMatches": "새로운 매칭",
+  "noMatchesYet": "아직 매칭된 친구가 없습니다."
 }

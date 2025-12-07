@@ -975,6 +975,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'신고가 접수되었습니다.'**
   String get reportSubmitted;
+
+  /// No description provided for @newMatches.
+  ///
+  /// In ko, this message translates to:
+  /// **'새로운 매칭'**
+  String get newMatches;
+
+  /// No description provided for @noMatchesYet.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 매칭된 친구가 없습니다.'**
+  String get noMatchesYet;
 }
 
 class _AppLocalizationsDelegate

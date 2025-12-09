@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_app/l10n/app_localizations.dart';
 import '../../models/chat_room_model.dart';
 import '../../models/user_model.dart';
@@ -21,18 +20,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
   final UserService _userService = UserService();
 
-  // 매칭된 친구 목록
-  List<UserModel> _matchedFriends = [];
+  // 전체 매칭된 친구 목록 (DB에서 가져온 원본)
+  List<UserModel> _allMatchedFriends = [];
   bool _isLoadingMatches = true;
 
   @override
   void initState() {
     super.initState();
-    _loadMatchedFriends();
+    _loadAllMatchedFriends();
   }
 
-  // 매칭된 친구 불러오기
-  Future<void> _loadMatchedFriends() async {
+  // 1. 내 모든 친구(매칭) 정보 가져오기
+  Future<void> _loadAllMatchedFriends() async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
 
@@ -40,7 +39,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       final friends = await _userService.getMatchedUsers(currentUser.uid);
       if (mounted) {
         setState(() {
-          _matchedFriends = friends;
+          _allMatchedFriends = friends;
           _isLoadingMatches = false;
         });
       }
@@ -49,35 +48,31 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
-  // 친구 아이콘 클릭 시 -> 채팅방으로 이동 (없으면 생성)
+  // 친구 아이콘 클릭 -> 채팅방 입장
   Future<void> _onFriendTap(UserModel friend) async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
 
-    try {
-      // 채팅방 생성 or 가져오기
-      final roomId = await _chatService.createOrGetChatRoom(
-        currentUserId: currentUser.uid,
-        otherUserId: friend.uid,
-        currentUserName: currentUser.displayName,
-        otherUserName: friend.displayName,
-      );
+    // 방을 생성하거나 가져옴
+    final roomId = await _chatService.createOrGetChatRoom(
+      currentUserId: currentUser.uid,
+      otherUserId: friend.uid,
+      currentUserName: currentUser.displayName,
+      otherUserName: friend.displayName,
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChatRoomScreen(
-            roomId: roomId,
-            otherUserName: friend.displayName,
-            otherUserId: friend.uid,
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatRoomScreen(
+          roomId: roomId,
+          otherUserName: friend.displayName,
+          otherUserId: friend.uid,
         ),
-      );
-    } catch (e) {
-      // error handling
-    }
+      ),
+    );
   }
 
   String _formatDate(DateTime date, String localeCode) {
@@ -100,44 +95,71 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (currentUserId == null)
       return const Center(child: CircularProgressIndicator());
 
+    // [핵심 변경] 전체 화면을 StreamBuilder로 감쌉니다.
+    // 이유: 채팅방 목록(하단)의 데이터가 변하면, 상단 목록(새로운 매칭)도 실시간으로 갱신되어야 하기 때문입니다.
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.tabChat)), // "채팅"
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ---------------------------------------------
-          // 1. 상단: 새로운 매칭 (가로 스크롤)
-          // ---------------------------------------------
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              l10n.newMatches, // "새로운 매칭"
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.black87,
-              ),
-            ),
-          ),
+      appBar: AppBar(title: Text(l10n.tabChat)),
+      body: StreamBuilder<List<ChatRoomModel>>(
+        stream: _chatService.getChatRoomsStream(currentUserId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          SizedBox(
-            height: 100, // 높이 고정
-            child: _isLoadingMatches
-                ? const Center(child: CircularProgressIndicator())
-                : _matchedFriends.isEmpty
-                ? Center(
-                    child: Text(
-                      l10n.noMatchesYet, // "아직 매칭된 친구가 없습니다"
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+          // 1. 현재 대화 중인 채팅방 목록 (하단용)
+          // (메시지가 하나라도 있는 방만 보여주거나, 생성된 모든 방 보여주기)
+          final chatRooms = snapshot.data ?? [];
+
+          // 2. 대화 중인 친구들의 ID 목록 추출 (1:1 채팅인 경우)
+          final Set<String> talkingUserIds = {};
+          for (var room in chatRooms) {
+            if (room.type == 'individual') {
+              // 나를 제외한 상대방 ID 찾기
+              final otherId = room.participants.firstWhere(
+                (id) => id != currentUserId,
+                orElse: () => '',
+              );
+              // [조건] 메시지가 하나라도 오고 갔을 때만 '대화 중'으로 칠 것인지 결정
+              // 여기서는 "방이 만들어져 있고 lastMessage가 비어있지 않으면" 대화 중으로 간주
+              if (otherId.isNotEmpty &&
+                  (room.lastMessage != null && room.lastMessage!.isNotEmpty)) {
+                talkingUserIds.add(otherId);
+              }
+            }
+          }
+
+          // 3. 새로운 매칭 목록 (상단용)
+          // 전체 친구 중 "아직 대화 안 한 사람(talkingUserIds에 없는 사람)"만 필터링
+          final newMatches = _allMatchedFriends.where((friend) {
+            return !talkingUserIds.contains(friend.uid);
+          }).toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ---------------------------------------------
+              // 상단: 새로운 매칭 (대화 안 한 친구들)
+              // ---------------------------------------------
+              if (newMatches.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    l10n.newMatches,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                  )
-                : ListView.separated(
+                  ),
+                ),
+                SizedBox(
+                  height: 100,
+                  child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     scrollDirection: Axis.horizontal,
-                    itemCount: _matchedFriends.length,
+                    itemCount: newMatches.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 16),
                     itemBuilder: (context, index) {
-                      final friend = _matchedFriends[index];
+                      final friend = newMatches[index];
                       return GestureDetector(
                         onTap: () => _onFriendTap(friend),
                         child: Column(
@@ -149,17 +171,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   backgroundImage: NetworkImage(
                                     friend.profileImageUrl,
                                   ),
-                                  backgroundColor: Colors.grey[200],
                                 ),
-                                // 온라인 상태 표시 (선택사항 - 지금은 장식용)
                                 Positioned(
                                   right: 0,
                                   bottom: 0,
                                   child: Container(
-                                    width: 16,
-                                    height: 16,
+                                    width: 14,
+                                    height: 14,
                                     decoration: BoxDecoration(
-                                      color: Colors.green,
+                                      color: Colors.redAccent, // 새 매칭 강조 (빨간 점)
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.white,
@@ -178,10 +198,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
                           ],
@@ -189,143 +206,131 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       );
                     },
                   ),
-          ),
+                ),
+                const Divider(thickness: 1, height: 1),
+              ],
 
-          const Divider(thickness: 1, height: 1),
-
-          // ---------------------------------------------
-          // 2. 하단: 채팅방 목록 (세로 리스트)
-          // ---------------------------------------------
-          Expanded(
-            child: StreamBuilder<List<ChatRoomModel>>(
-              stream: _chatService.getChatRoomsStream(currentUserId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final chatRooms = snapshot.data ?? [];
-
-                if (chatRooms.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
+              // ---------------------------------------------
+              // 하단: 채팅방 목록 (대화 중인 방)
+              // ---------------------------------------------
+              Expanded(
+                child: chatRooms.isEmpty && newMatches.isEmpty
+                    ? Center(
+                        child: Text(
                           l10n.noConversations,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
-                      ],
-                    ),
-                  );
-                }
+                      )
+                    : ListView.builder(
+                        itemCount: chatRooms.length,
+                        itemBuilder: (context, index) {
+                          final room = chatRooms[index];
 
-                return ListView.builder(
-                  itemCount: chatRooms.length,
-                  itemBuilder: (context, index) {
-                    final room = chatRooms[index];
+                          // [중요] 메시지가 없는 빈 방은 목록에서 숨길 것인가?
+                          // -> "상단에 새 매칭으로 표시 중"이라면 하단에선 숨기는 게 깔끔함.
+                          // -> 여기서는 lastMessage가 있는 방만 보여주도록 필터링 가능하지만,
+                          //    ListTile에서 처리.
+                          if ((room.lastMessage == null ||
+                                  room.lastMessage!.isEmpty) &&
+                              room.type == 'individual') {
+                            return const SizedBox(); // 빈 방은 안 보여줌 (상단에 있을 테니까)
+                          }
 
-                    // 상대방 정보 찾기 (1:1인 경우)
-                    String otherUserId = '';
-                    String roomTitle = room.title ?? 'Chat';
+                          // 상대방 정보 찾기
+                          String otherUserId = '';
+                          String roomTitle = room.title ?? 'Chat';
 
-                    if (room.type == 'individual') {
-                      otherUserId = room.participants.firstWhere(
-                        (id) => id != currentUserId,
-                        orElse: () => '',
-                      );
-                      // 방 제목이 없으면 상대 이름 표시 로직 필요하지만,
-                      // 보통 ChatRoomModel 생성 시 title을 미리 세팅하거나 여기서 fetch 해야 함.
-                      // 간소화를 위해 우선 저장된 title 사용
-                    }
+                          if (room.type == 'individual') {
+                            otherUserId = room.participants.firstWhere(
+                              (id) => id != currentUserId,
+                              orElse: () => '',
+                            );
+                            // 1:1 채팅방 이름은 상대방 이름이 와야 함 (여기선 간단히 기존 title 사용하거나 로직 추가)
+                            // 실무에선 여기서 getUser를 또 하거나 캐싱된 정보를 씀.
+                            // 일단 room.title 사용 (createOrGetChatRoom에서 저장해둠)
+                          }
 
-                    final unreadCount = room.unreadCount[currentUserId] ?? 0;
-
-                    return ListTile(
-                      leading: CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.grey[200],
-                        child: room.type == 'group'
-                            ? const Icon(Icons.groups, color: Colors.grey)
-                            : const Icon(Icons.person, color: Colors.grey),
-                      ),
-                      title: Text(
-                        roomTitle,
-                        style: TextStyle(
-                          fontWeight: unreadCount > 0
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      subtitle: Text(
-                        room.lastMessage ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: unreadCount > 0 ? Colors.black87 : Colors.grey,
-                          fontWeight: unreadCount > 0
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            room.lastMessageTime != null
-                                ? _formatDate(room.lastMessageTime!, localeCode)
-                                : '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[500],
+                          return ListTile(
+                            leading: CircleAvatar(
+                              radius: 28,
+                              backgroundColor: Colors.grey[200],
+                              child: room.type == 'group'
+                                  ? const Icon(Icons.groups, color: Colors.grey)
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.grey,
+                                    ),
                             ),
-                          ),
-                          if (unreadCount > 0) ...[
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+                            title: Text(
+                              roomTitle,
+                              style: TextStyle(
+                                fontWeight:
+                                    (room.unreadCount[currentUserId] ?? 0) > 0
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
-                              child: Text(
-                                unreadCount > 99 ? '99+' : '$unreadCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            subtitle: Text(
+                              room.lastMessage ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  room.lastMessageTime != null
+                                      ? _formatDate(
+                                          room.lastMessageTime!,
+                                          localeCode,
+                                        )
+                                      : '',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[500],
+                                  ),
                                 ),
-                              ),
+                                if ((room.unreadCount[currentUserId] ?? 0) >
+                                    0) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '${room.unreadCount[currentUserId]}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ],
-                        ],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatRoomScreen(
+                                    roomId: room.roomId,
+                                    otherUserName: roomTitle,
+                                    otherUserId: otherUserId,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatRoomScreen(
-                              roomId: room.roomId,
-                              otherUserName: roomTitle,
-                              otherUserId: otherUserId,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

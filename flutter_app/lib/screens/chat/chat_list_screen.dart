@@ -20,7 +20,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
   final UserService _userService = UserService();
 
-  // 전체 매칭된 친구 목록 (DB에서 가져온 원본)
   List<UserModel> _allMatchedFriends = [];
   bool _isLoadingMatches = true;
 
@@ -30,7 +29,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     _loadAllMatchedFriends();
   }
 
-  // 1. 내 모든 친구(매칭) 정보 가져오기
   Future<void> _loadAllMatchedFriends() async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
@@ -48,12 +46,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
-  // 친구 아이콘 클릭 -> 채팅방 입장
   Future<void> _onFriendTap(UserModel friend) async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
 
-    // 방을 생성하거나 가져옴
     final roomId = await _chatService.createOrGetChatRoom(
       currentUserId: currentUser.uid,
       otherUserId: friend.uid,
@@ -95,8 +91,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (currentUserId == null)
       return const Center(child: CircularProgressIndicator());
 
-    // [핵심 변경] 전체 화면을 StreamBuilder로 감쌉니다.
-    // 이유: 채팅방 목록(하단)의 데이터가 변하면, 상단 목록(새로운 매칭)도 실시간으로 갱신되어야 하기 때문입니다.
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabChat)),
       body: StreamBuilder<List<ChatRoomModel>>(
@@ -106,21 +100,25 @@ class _ChatListScreenState extends State<ChatListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 1. 현재 대화 중인 채팅방 목록 (하단용)
-          // (메시지가 하나라도 있는 방만 보여주거나, 생성된 모든 방 보여주기)
-          final chatRooms = snapshot.data ?? [];
+          // 1. 데이터 가져오기 (정렬 안 된 상태)
+          var chatRooms = snapshot.data ?? [];
 
-          // 2. 대화 중인 친구들의 ID 목록 추출 (1:1 채팅인 경우)
+          // 2. [핵심] 앱 내부에서 최신순 정렬 (Null 안전 처리 포함)
+          chatRooms.sort((a, b) {
+            if (a.lastMessageTime == null) return -1; // 시간 없으면 뒤로
+            if (b.lastMessageTime == null) return 1;
+            return b.lastMessageTime!.compareTo(a.lastMessageTime!); // 내림차순
+          });
+
+          // 3. 대화 중인 상대방 ID 추출 (필터링용)
           final Set<String> talkingUserIds = {};
           for (var room in chatRooms) {
             if (room.type == 'individual') {
-              // 나를 제외한 상대방 ID 찾기
               final otherId = room.participants.firstWhere(
                 (id) => id != currentUserId,
                 orElse: () => '',
               );
-              // [조건] 메시지가 하나라도 오고 갔을 때만 '대화 중'으로 칠 것인지 결정
-              // 여기서는 "방이 만들어져 있고 lastMessage가 비어있지 않으면" 대화 중으로 간주
+              // 메시지가 있거나 방금 만든 방이면 '대화 중'으로 간주
               if (otherId.isNotEmpty &&
                   (room.lastMessage != null && room.lastMessage!.isNotEmpty)) {
                 talkingUserIds.add(otherId);
@@ -128,8 +126,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             }
           }
 
-          // 3. 새로운 매칭 목록 (상단용)
-          // 전체 친구 중 "아직 대화 안 한 사람(talkingUserIds에 없는 사람)"만 필터링
+          // 4. 새로운 매칭 목록 (대화 안 한 친구만)
           final newMatches = _allMatchedFriends.where((friend) {
             return !talkingUserIds.contains(friend.uid);
           }).toList();
@@ -137,9 +134,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ---------------------------------------------
-              // 상단: 새로운 매칭 (대화 안 한 친구들)
-              // ---------------------------------------------
+              // --- 상단: 새로운 매칭 ---
               if (newMatches.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -179,7 +174,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     width: 14,
                                     height: 14,
                                     decoration: BoxDecoration(
-                                      color: Colors.redAccent, // 새 매칭 강조 (빨간 점)
+                                      color: Colors.redAccent,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Colors.white,
@@ -210,9 +205,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 const Divider(thickness: 1, height: 1),
               ],
 
-              // ---------------------------------------------
-              // 하단: 채팅방 목록 (대화 중인 방)
-              // ---------------------------------------------
+              // --- 하단: 채팅방 목록 ---
               Expanded(
                 child: chatRooms.isEmpty && newMatches.isEmpty
                     ? Center(
@@ -226,17 +219,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         itemBuilder: (context, index) {
                           final room = chatRooms[index];
 
-                          // [중요] 메시지가 없는 빈 방은 목록에서 숨길 것인가?
-                          // -> "상단에 새 매칭으로 표시 중"이라면 하단에선 숨기는 게 깔끔함.
-                          // -> 여기서는 lastMessage가 있는 방만 보여주도록 필터링 가능하지만,
-                          //    ListTile에서 처리.
+                          // 빈 방은 숨김 (상단에 있을테니)
                           if ((room.lastMessage == null ||
                                   room.lastMessage!.isEmpty) &&
                               room.type == 'individual') {
-                            return const SizedBox(); // 빈 방은 안 보여줌 (상단에 있을 테니까)
+                            return const SizedBox();
                           }
 
-                          // 상대방 정보 찾기
                           String otherUserId = '';
                           String roomTitle = room.title ?? 'Chat';
 
@@ -245,9 +234,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               (id) => id != currentUserId,
                               orElse: () => '',
                             );
-                            // 1:1 채팅방 이름은 상대방 이름이 와야 함 (여기선 간단히 기존 title 사용하거나 로직 추가)
-                            // 실무에선 여기서 getUser를 또 하거나 캐싱된 정보를 씀.
-                            // 일단 room.title 사용 (createOrGetChatRoom에서 저장해둠)
                           }
 
                           return ListTile(

@@ -135,18 +135,14 @@ class ChatService {
         });
   }
 
-  // 4. [핵심 수정] 채팅방 목록 스트림
   Stream<List<ChatRoomModel>> getChatRoomsStream(String userId) {
     return _firestore
         .collection('chat_rooms')
         .where('participants', arrayContains: userId)
-        .orderBy('lastMessageTime', descending: true)
+        // [삭제] .orderBy('lastMessageTime', descending: true) -> 깜빡임 원인 제거
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
-            // [수정된 부분] 이전에는 (doc.data(), doc.id) 였으나,
-            // ChatRoomModel.fromFirestore(doc) 하나만 받도록 모델을 고쳤으므로
-            // 여기도 doc 하나만 넘겨야 합니다.
             return ChatRoomModel.fromFirestore(doc);
           }).toList();
         });

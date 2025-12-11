@@ -20,6 +20,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final ChatService _chatService = ChatService();
   final UserService _userService = UserService();
 
+  // 캐싱된 친구 목록 (빠른 로딩용)
   List<UserModel> _allMatchedFriends = [];
   bool _isLoadingMatches = true;
 
@@ -46,6 +47,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
+  // 상단 친구 아이콘 클릭 -> 채팅방 입장
   Future<void> _onFriendTap(UserModel friend) async {
     final currentUser = context.read<AuthProvider>().currentUserProfile;
     if (currentUser == null) return;
@@ -82,6 +84,89 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
+  // [핵심] 리스트 타일(채팅방 한 줄)을 그려주는 함수
+  Widget _buildChatTile(
+    BuildContext context,
+    ChatRoomModel room,
+    String currentUserId,
+    String name,
+    String? imageUrl,
+    String otherUserId,
+    String localeCode,
+  ) {
+    final unreadCount = room.unreadCount[currentUserId] ?? 0;
+
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 28,
+        backgroundColor: Colors.grey[200],
+        backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+        child: imageUrl == null
+            ? (room.type == 'group'
+                  ? const Icon(Icons.groups, color: Colors.grey)
+                  : const Icon(Icons.person, color: Colors.grey))
+            : null,
+      ),
+      title: Text(
+        name,
+        style: TextStyle(
+          fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      subtitle: Text(
+        room.lastMessage ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: unreadCount > 0 ? Colors.black87 : Colors.grey,
+          fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            room.lastMessageTime != null
+                ? _formatDate(room.lastMessageTime!, localeCode)
+                : '',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          ),
+          if (unreadCount > 0) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomScreen(
+              roomId: room.roomId,
+              otherUserName: name,
+              otherUserId: otherUserId,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -100,17 +185,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 1. 데이터 가져오기 (정렬 안 된 상태)
           var chatRooms = snapshot.data ?? [];
 
-          // 2. [핵심] 앱 내부에서 최신순 정렬 (Null 안전 처리 포함)
+          // 최신순 정렬
           chatRooms.sort((a, b) {
-            if (a.lastMessageTime == null) return -1; // 시간 없으면 뒤로
+            if (a.lastMessageTime == null) return -1;
             if (b.lastMessageTime == null) return 1;
-            return b.lastMessageTime!.compareTo(a.lastMessageTime!); // 내림차순
+            return b.lastMessageTime!.compareTo(a.lastMessageTime!);
           });
 
-          // 3. 대화 중인 상대방 ID 추출 (필터링용)
+          // 대화 중인 유저 ID 추출
           final Set<String> talkingUserIds = {};
           for (var room in chatRooms) {
             if (room.type == 'individual') {
@@ -118,7 +202,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 (id) => id != currentUserId,
                 orElse: () => '',
               );
-              // 메시지가 있거나 방금 만든 방이면 '대화 중'으로 간주
               if (otherId.isNotEmpty &&
                   (room.lastMessage != null && room.lastMessage!.isNotEmpty)) {
                 talkingUserIds.add(otherId);
@@ -126,7 +209,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             }
           }
 
-          // 4. 새로운 매칭 목록 (대화 안 한 친구만)
+          // 새로운 매칭 목록 필터링
           final newMatches = _allMatchedFriends.where((friend) {
             return !talkingUserIds.contains(friend.uid);
           }).toList();
@@ -219,98 +302,77 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         itemBuilder: (context, index) {
                           final room = chatRooms[index];
 
-                          // 빈 방은 숨김 (상단에 있을테니)
+                          // 빈 방 숨김 (상단에 표시되므로)
                           if ((room.lastMessage == null ||
                                   room.lastMessage!.isEmpty) &&
                               room.type == 'individual') {
                             return const SizedBox();
                           }
 
-                          String otherUserId = '';
-                          String roomTitle = room.title ?? 'Chat';
-
-                          if (room.type == 'individual') {
-                            otherUserId = room.participants.firstWhere(
+                          // 1. 그룹 채팅인 경우
+                          if (room.type == 'group') {
+                            return _buildChatTile(
+                              context,
+                              room,
+                              currentUserId,
+                              room.title ?? 'Group Chat',
+                              null, // 그룹 이미지가 있다면 여기에
+                              '',
+                              localeCode,
+                            );
+                          }
+                          // 2. 1:1 채팅인 경우 -> 상대방 이름 찾아야 함
+                          else {
+                            final otherUserId = room.participants.firstWhere(
                               (id) => id != currentUserId,
                               orElse: () => '',
                             );
-                          }
 
-                          return ListTile(
-                            leading: CircleAvatar(
-                              radius: 28,
-                              backgroundColor: Colors.grey[200],
-                              child: room.type == 'group'
-                                  ? const Icon(Icons.groups, color: Colors.grey)
-                                  : const Icon(
-                                      Icons.person,
-                                      color: Colors.grey,
-                                    ),
-                            ),
-                            title: Text(
-                              roomTitle,
-                              style: TextStyle(
-                                fontWeight:
-                                    (room.unreadCount[currentUserId] ?? 0) > 0
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            subtitle: Text(
-                              room.lastMessage ?? '',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  room.lastMessageTime != null
-                                      ? _formatDate(
-                                          room.lastMessageTime!,
-                                          localeCode,
-                                        )
-                                      : '',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                                if ((room.unreadCount[currentUserId] ?? 0) >
-                                    0) ...[
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Text(
-                                      '${room.unreadCount[currentUserId]}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatRoomScreen(
-                                    roomId: room.roomId,
-                                    otherUserName: roomTitle,
-                                    otherUserId: otherUserId,
-                                  ),
-                                ),
+                            // (A) 캐시된 친구 목록에서 먼저 찾기 (빠름)
+                            UserModel? targetUser;
+                            try {
+                              targetUser = _allMatchedFriends.firstWhere(
+                                (u) => u.uid == otherUserId,
                               );
-                            },
-                          );
+                            } catch (_) {
+                              // 캐시에 없음
+                            }
+
+                            if (targetUser != null) {
+                              return _buildChatTile(
+                                context,
+                                room,
+                                currentUserId,
+                                targetUser.displayName,
+                                targetUser.profileImageUrl,
+                                otherUserId,
+                                localeCode,
+                              );
+                            }
+                            // (B) 캐시에 없으면 DB에서 불러오기 (FutureBuilder 사용)
+                            else {
+                              return FutureBuilder<UserModel?>(
+                                future: _userService.getUser(otherUserId),
+                                builder: (context, snapshot) {
+                                  final user = snapshot.data;
+                                  final name =
+                                      user?.displayName ??
+                                      '알 수 없음'; // 로딩 중이거나 없으면
+                                  final image = user?.profileImageUrl;
+
+                                  return _buildChatTile(
+                                    context,
+                                    room,
+                                    currentUserId,
+                                    name,
+                                    image,
+                                    otherUserId,
+                                    localeCode,
+                                  );
+                                },
+                              );
+                            }
+                          }
                         },
                       ),
               ),

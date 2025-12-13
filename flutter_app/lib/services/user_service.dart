@@ -133,26 +133,64 @@ class UserService {
   }
 
   // 2. [신규] 오늘의 추천 (랜덤 5명)
-  Future<List<UserModel>> getDailyRecommendations(
-    String currentUserId,
-    String myGender,
-  ) async {
+  Future<List<UserModel>> getDailyRecommendations({
+    required String currentUserId,
+    required String myGender, // 내 성별
+  }) async {
     try {
-      // 이성 추천 (남 -> 여, 여 -> 남)
+      // 1. 추천 대상 성별 결정 (남 <-> 여)
+      // (성별이 '무관'이거나 설정이 없다면 전체 대상)
       String targetGender = (myGender == 'male') ? 'female' : 'male';
 
-      // 모든 이성 유저 가져오기 (실무에선 limit와 커서 페이징 사용 권장)
-      List<UserModel> candidates = await getAllUsers(
-        currentUserId: currentUserId,
-        gender: targetGender,
-        minMannerScore: 50.0, // 기본 매너 점수 이상
-      );
+      // 2. 쿼리 실행
+      // 실무 팁: 유저가 수백만 명이면 DB에서 랜덤 정렬이 어렵습니다.
+      // 초기에는 '매너온도'가 높은 사람이나 '최신 가입자' 50명을 가져와서 앱에서 섞습니다.
+      Query query = _firestore.collection('users');
 
-      // 랜덤 셔플 후 상위 5명 추출
+      query = query.where('gender', isEqualTo: targetGender);
+      query = query.where('isBlocked', isEqualTo: false);
+      query = query.where(
+        'mannerScore',
+        isGreaterThanOrEqualTo: 40.0,
+      ); // 매너 좋은 사람만
+
+      // 데이터 가져오기 (limit를 넉넉히 잡음)
+      final snapshot = await query.limit(50).get();
+
+      // 내 정보 가져오기 (이미 매칭된 사람 제외용)
+      final myDoc = await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .get();
+      List<String> myMatches = [];
+      List<String> mySentLikes = []; // 내가 이미 좋아요 보낸 사람도 제외하면 좋음
+
+      if (myDoc.exists) {
+        final data = myDoc.data()!;
+        myMatches = List<String>.from(data['matches'] ?? []);
+        // receivedLikes만 모델에 있는데, '내가 보낸 좋아요'는 보통 별도 컬렉션이나 필드로 관리.
+        // 여기서는 간단히 '매칭된 사람'과 '나 자신'만 제외합니다.
+      }
+
+      // 3. 필터링 & 객체 변환
+      List<UserModel> candidates = snapshot.docs
+          .map(
+            (doc) => UserModel.fromFirestore(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
+          .where((user) => user.uid != currentUserId) // 나 제외
+          .where((user) => !myMatches.contains(user.uid)) // 이미 친구인 사람 제외
+          .toList();
+
+      // 4. 랜덤 셔플 (오늘의 운세 느낌!)
       candidates.shuffle(Random());
+
+      // 5. 상위 5명만 리턴
       return candidates.take(5).toList();
     } catch (e) {
-      return [];
+      return []; // 에러 나면 빈 리스트
     }
   }
 
